@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Model;
+using Server.Dtos;
 using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace Server.Controllers
 {
@@ -46,14 +49,15 @@ namespace Server.Controllers
             // https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-8.0&tabs=windows
             client.DefaultRequestHeaders.Add("x-api-key", _config["Woot:DeveloperApiKey"]);
 
-            // HttpResponseMessage usage, see:
+            // HttpResponseMessage, see:
             // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpresponsemessage?view=net-8.0
             try
             {
                 using HttpResponseMessage response = await client.GetAsync(uri);
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
-                return Ok(responseBody);
+                WootOfferDto? offer = JsonSerializer.Deserialize<WootOfferDto>(responseBody);
+                return Ok(offer.Title);
             }
             catch (HttpRequestException e)
             {
