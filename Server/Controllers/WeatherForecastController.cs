@@ -36,7 +36,7 @@ namespace Server.Controllers
         }
 
         [HttpGet("offers/{id}")]
-        public async Task<HttpResponseMessage> GetOffer(string id)
+        public async Task<IActionResult> GetOffer(string id)
         {
             var uri = $"https://developer.woot.com/offers/{id}";
 
@@ -45,12 +45,20 @@ namespace Server.Controllers
             // Secret Manager tool (development), see:
             // https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-8.0&tabs=windows
             client.DefaultRequestHeaders.Add("x-api-key", _config["Woot:DeveloperApiKey"]);
-            
-            HttpResponseMessage response = await client.GetAsync(uri).ConfigureAwait(false);
 
-            // if (response.IsSuccessStatusCode)
-
-            return response;
+            // HttpResponseMessage usage, see:
+            // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpresponsemessage?view=net-8.0
+            try
+            {
+                using HttpResponseMessage response = await client.GetAsync(uri);
+                response.EnsureSuccessStatusCode();
+                string responseBody = await response.Content.ReadAsStringAsync();
+                return Ok(responseBody);
+            }
+            catch (HttpRequestException e)
+            {
+                return BadRequest(e.Message);
+            }
         }
     }
 }
