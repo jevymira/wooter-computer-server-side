@@ -15,6 +15,8 @@ public partial class WootComputersSourceContext : DbContext
     {
     }
 
+    public virtual DbSet<Configuration> Configurations { get; set; }
+
     public virtual DbSet<Offer> Offers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -23,6 +25,18 @@ public partial class WootComputersSourceContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Configuration>(entity =>
+        {
+            entity.ToTable("Configuration");
+
+            entity.Property(e => e.Processor).HasMaxLength(50);
+
+            entity.HasOne(d => d.Offer).WithMany(p => p.Configurations)
+                .HasForeignKey(d => d.OfferId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Configuration_Offer");
+        });
+
         modelBuilder.Entity<Offer>(entity =>
         {
             entity.ToTable("Offer");

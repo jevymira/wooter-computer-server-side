@@ -20,4 +20,6 @@ public partial class Offer
     public string Condition { get; set; } = null!;
 
     public string Url { get; set; } = null!;
+
+    public virtual ICollection<Configuration> Configurations { get; set; } = new List<Configuration>();
 }
