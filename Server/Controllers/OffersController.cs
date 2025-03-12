@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Model;
 using Server.Dtos;
 
@@ -104,7 +105,14 @@ namespace Server.Controllers
                     Photo = offerDto.Photo,
                     IsSoldOut = offerDto.IsSoldOut,
                     Condition = "PLACEHOLDER",
-                    Url = offerDto.Url
+                    Url = offerDto.Url,
+                    Configurations = new List<Configuration>{new Configuration // FIXME: instead should "copy" from WootItemDto
+                    {
+                        WootId = Guid.NewGuid(), // FIXME: PLACEHOLDER
+                        Processor = offerDto.Items.First().Attributes.Where(x => x.Key == "Model").First().Value, // FIXME: Items.First()
+                        MemoryCapacity = 16,
+                        StorageSize = 512,
+                    }}
                 };
 
                 _context.Offers.Add(offer);
