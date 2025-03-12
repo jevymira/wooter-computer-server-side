@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 
 namespace Model;
 
+[Index(nameof(WootId))] // nameof: type safety
 public partial class Offer
 {
     public int Id { get; set; }
