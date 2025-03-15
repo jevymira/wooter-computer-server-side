@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -106,13 +107,34 @@ namespace Server.Controllers
                     IsSoldOut = offerDto.IsSoldOut,
                     Condition = "PLACEHOLDER",
                     Url = offerDto.Url,
-                    Configurations = new List<Configuration>{new Configuration // FIXME: instead should "copy" from WootItemDto
+                };
+
+                // ICollection<Configuration> configs = new List<Configuration>();
+
+
+                // items is a Woot! catch-all; more specifically called "Models" for electronics (or "Configurations" on other retailers)
+                foreach (WootItemDto items in offerDto.Items)
+                {
+                    WootAttributeDto? a = offerDto.Items.First().Attributes.Where(x => x.Key == "Model").FirstOrDefault();
+                    string s = string.Empty;
+                    if (a != null)
                     {
-                        WootId = Guid.NewGuid(), // FIXME: PLACEHOLDER
-                        Processor = offerDto.Items.First().Attributes.Where(x => x.Key == "Model").First().Value, // FIXME: Items.First()
-                        MemoryCapacity = 16,
-                        StorageSize = 512,
-                    }}
+                        s = a.Value.ToString();
+                    }
+                    offer.Configurations.Add(new Configuration
+                    {
+                        WootId = items.Id,
+                        // FirstOrDefault returns null for reference types
+                        Processor = s,
+                        MemoryCapacity = 000,
+                        StorageSize = 000,
+                    });
+                }
+
+                if (offer.Configurations.First().Processor == null ||
+                    offer.Configurations.First().Processor == String.Empty)
+                {
+                    offer.Configurations.First().Processor = "SINGLE MODEL";
                 };
 
                 _context.Offers.Add(offer);

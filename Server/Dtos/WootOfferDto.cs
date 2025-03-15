@@ -19,6 +19,8 @@ namespace Server.Dtos
 
         public string Url { get; set; } = null!;
 
+        public string Specs { get; set; } = null!;
+
         public ICollection<WootItemDto> Items { get; set; } = new List<WootItemDto>();
     }
 }
