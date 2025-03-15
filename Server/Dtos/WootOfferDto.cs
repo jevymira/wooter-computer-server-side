@@ -21,6 +21,6 @@ namespace Server.Dtos
 
         public string Specs { get; set; } = null!;
 
-        public ICollection<WootItemDto> Items { get; set; } = new List<WootItemDto>();
+        public ICollection<WootOfferItemDto> Items { get; set; } = new List<WootOfferItemDto>();
     }
 }

@@ -114,9 +114,9 @@ namespace Server.Controllers
 
 
                 // items is a Woot! catch-all; more specifically called "Models" for electronics (or "Configurations" on other retailers)
-                foreach (WootItemDto item in offerDto.Items)
+                foreach (WootOfferItemDto item in offerDto.Items)
                 {
-                    WootAttributeDto? a = item.Attributes.Where(x => x.Key == "Model").FirstOrDefault();
+                    WootOfferItemAttributeDto? a = item.Attributes.Where(x => x.Key == "Model").FirstOrDefault();
                     string s = string.Empty;
                     if (a != null)
                     {

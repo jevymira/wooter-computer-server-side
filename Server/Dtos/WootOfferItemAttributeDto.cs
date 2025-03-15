@@ -1,6 +1,6 @@
 ﻿namespace Server.Dtos
 {
-    public class WootAttributeDto
+    public class WootOfferItemAttributeDto
     {
         public string Key { get; set; } = null!;
 
