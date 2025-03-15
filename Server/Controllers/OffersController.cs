@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -113,20 +114,26 @@ namespace Server.Controllers
 
 
                 // items is a Woot! catch-all; more specifically called "Models" for electronics (or "Configurations" on other retailers)
-                foreach (WootItemDto items in offerDto.Items)
+                foreach (WootItemDto item in offerDto.Items)
                 {
-                    WootAttributeDto? a = offerDto.Items.First().Attributes.Where(x => x.Key == "Model").FirstOrDefault();
+                    WootAttributeDto? a = item.Attributes.Where(x => x.Key == "Model").FirstOrDefault();
                     string s = string.Empty;
                     if (a != null)
                     {
                         s = a.Value.ToString();
                     }
-                    offer.Configurations.Add(new Configuration
+
+                    // regular expression to extract specifications
+                    var regex = new Regex(@"([0-9]{1,2})[G][B]");
+                    var match = regex.Match(s);
+
+                    // FIXME: remove Model. namespace prefix once renamed
+                    offer.Configurations.Add(new Model.Configuration
                     {
-                        WootId = items.Id,
+                        WootId = item.Id,
                         // FirstOrDefault returns null for reference types
                         Processor = s,
-                        MemoryCapacity = 000,
+                        MemoryCapacity = Int16.Parse(match.Groups[1].Value),
                         StorageSize = 000,
                     });
                 }
