@@ -78,6 +78,33 @@ namespace Server.Controllers
             return NoContent();
         }
 
+        [HttpGet("load")]
+        public async Task<IActionResult> LoadOffers()
+        {
+            var uri = $"https://developer.woot.com/feed/Computers";
+
+            HttpClient client = new HttpClient(); // FIXME: use HTTPClientFactory
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            // Secret Manager tool (development), see:
+            // https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-8.0&tabs=windows
+            client.DefaultRequestHeaders.Add("x-api-key", _config["Woot:DeveloperApiKey"]);
+
+            // HttpResponseMessage, see:
+            // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpresponsemessage?view=net-8.0
+            try
+            {
+                using HttpResponseMessage response = await client.GetAsync(uri);
+                response.EnsureSuccessStatusCode();
+                string responseBody = await response.Content.ReadAsStringAsync();
+                WootNamedFeedDto feed = JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
+                return Ok(feed.Offers.Count);
+            }
+            catch (HttpRequestException e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
         // FIXME: REFACTOR
         [HttpPut("load/{id}")]
         public async Task<IActionResult> LoadOffer(Guid id)
@@ -110,8 +137,6 @@ namespace Server.Controllers
                     Url = offerDto.Url,
                 };
 
-                // ICollection<Configuration> configs = new List<Configuration>();
-
 
                 // items is a Woot! catch-all; more specifically called "Models" for electronics (or "Configurations" on other retailers)
                 foreach (WootOfferItemDto item in offerDto.Items)
@@ -124,17 +149,23 @@ namespace Server.Controllers
                     }
 
                     // regular expression to extract specifications
-                    var regex = new Regex(@"([0-9]{1,2})[G][B]");
+                    var regex = new Regex(@"([0-9]{1,2})GB\W+([0-9]{1,4})");
                     var match = regex.Match(s);
+
+                    short storage = Int16.Parse(match.Groups[2].Value);
+                    if (s.Contains("TB")) { // FIXME: perform more specific check
+                        // 1000GB per 1TB
+                        storage *= 1000;
+                    }
 
                     // FIXME: remove Model. namespace prefix once renamed
                     offer.Configurations.Add(new Model.Configuration
                     {
                         WootId = item.Id,
-                        // FirstOrDefault returns null for reference types
-                        Processor = s,
+                        Processor = string.Empty,
                         MemoryCapacity = Int16.Parse(match.Groups[1].Value),
-                        StorageSize = 000,
+                        StorageSize = storage,
+                        Price = item.SalePrice
                     });
                 }
 
