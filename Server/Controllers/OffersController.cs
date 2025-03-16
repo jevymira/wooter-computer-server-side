@@ -96,8 +96,9 @@ namespace Server.Controllers
                 using HttpResponseMessage response = await client.GetAsync(uri);
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
-                WootNamedFeedDto feed = JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
-                return Ok(feed.Offers.Count);
+                WootNamedFeedDto? feed = JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
+                IEnumerable<WootOfferDto>? query = feed.Offers.Where(o => o.Categories.Contains("PC/Desktops") || o.Categories.Contains("PC/Laptops"));
+                return Ok(query.Count());
             }
             catch (HttpRequestException e)
             {

@@ -4,10 +4,10 @@ namespace Server.Dtos
 {
     public class WootOfferDto
     {
-        [JsonPropertyName("id")]
+        [JsonPropertyName("OfferId")]
         public Guid WootId { get; set; }
 
-        public string Category { get; set; } = null!;
+        public string[] Categories { get; set; } = null!;
 
         public string Title { get; set; } = null!;
 
