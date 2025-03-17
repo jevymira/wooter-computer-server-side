@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Net.Http.Headers;
+using System.Security.Policy;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -11,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Model;
+using NuGet.Packaging;
 using Server.Dtos;
 
 namespace Server.Controllers
@@ -81,6 +84,14 @@ namespace Server.Controllers
         [HttpGet("load")]
         public async Task<IActionResult> LoadOffers()
         {
+            /*
+            string[] arr =
+            {
+                "33bf1b93-fed8-472c-9420-1c253cab0ac1",
+                "46e17737-752d-47b5-8e6f-ced44c2ec853"
+            };
+            */
+
             var uri = $"https://developer.woot.com/feed/Computers";
 
             HttpClient client = new HttpClient(); // FIXME: use HTTPClientFactory
@@ -96,9 +107,44 @@ namespace Server.Controllers
                 using HttpResponseMessage response = await client.GetAsync(uri);
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
+
                 WootNamedFeedDto? feed = JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
-                IEnumerable<WootOfferDto>? query = feed.Offers.Where(o => o.Categories.Contains("PC/Desktops") || o.Categories.Contains("PC/Laptops"));
-                return Ok(query.Count());
+                IEnumerable<WootOfferDto>? query = feed.Offers.Where(o =>
+                    o.Categories.Contains("PC/Desktops") ||
+                    o.Categories.Contains("PC/Laptops"));
+                int i = query.Count();
+
+                uri = $"https://developer.woot.com/getoffers";
+                
+                ICollection<WootOfferDto> offers = new List<WootOfferDto>();
+
+                int j = 0;
+
+                // iterate through in increments of 25 offers (Woot API POST request body has a 25 offer max.)
+                while (j < i)
+                {
+                    HttpClient client2 = new HttpClient(); // FIXME: use HTTPClientFactory
+                    client2.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    client2.DefaultRequestHeaders.Add("x-api-key", _config["Woot:DeveloperApiKey"]);
+                    // Woot schema requires array of IDs
+                    var offerIncrement = query.Skip(j).Take(25);
+                    List<Guid> ids = new List<Guid>();
+                    foreach (WootOfferDto offer in offerIncrement)
+                    {
+                        ids.Add(offer.WootId);
+                    }
+                    HttpContent content = new StringContent(JsonSerializer.Serialize(ids));
+
+                    using HttpResponseMessage response2 = await client2.PostAsync(uri, content);
+                    response2.EnsureSuccessStatusCode();
+                    string responseBody2 = await response2.Content.ReadAsStringAsync();
+
+                    ICollection<WootOfferDto> returned = JsonSerializer.Deserialize<List<WootOfferDto>>(responseBody2);
+                    offers.AddRange(returned);
+
+                    j += 25;
+                }
+                return Ok(offers);
             }
             catch (HttpRequestException e)
             {
