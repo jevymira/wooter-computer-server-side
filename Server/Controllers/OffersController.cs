@@ -87,14 +87,9 @@ namespace Server.Controllers
         [HttpGet("load")]
         public async Task<IActionResult> LoadOffers()
         {
-            /*
-            string[] arr =
-            {
-                "33bf1b93-fed8-472c-9420-1c253cab0ac1",
-                "46e17737-752d-47b5-8e6f-ced44c2ec853"
-            };
-            */
+            return NoContent();
 
+            /*
             var uri = $"https://developer.woot.com/feed/Computers";
 
             HttpClient client = new HttpClient(); // FIXME: use HTTPClientFactory
@@ -112,7 +107,7 @@ namespace Server.Controllers
                 string responseBody = await response.Content.ReadAsStringAsync();
 
                 WootNamedFeedDto? feed = JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
-                IEnumerable<WootOfferDto>? query = feed.Offers.Where(o =>
+                IEnumerable<WootFeedItemDto>? query = feed.Items.Where(o =>
                     o.Categories.Contains("PC/Desktops") ||
                     o.Categories.Contains("PC/Laptops"));
                 int i = query.Count();
@@ -132,9 +127,9 @@ namespace Server.Controllers
                     // Woot schema requires array of IDs
                     var offerIncrement = query.Skip(j).Take(25);
                     List<Guid> ids = new List<Guid>();
-                    foreach (WootOfferDto offer in offerIncrement)
+                    foreach (WootFeedItemDto offer in offerIncrement)
                     {
-                        ids.Add(offer.WootId);
+                        ids.Add(offer.OfferId);
                     }
                     HttpContent content = new StringContent(JsonSerializer.Serialize(ids));
 
@@ -142,7 +137,7 @@ namespace Server.Controllers
                     response2.EnsureSuccessStatusCode();
                     string responseBody2 = await response2.Content.ReadAsStringAsync();
 
-                    ICollection<WootOfferDto> returned = JsonSerializer.Deserialize<List<WootOfferDto>>(responseBody2);
+                    IEnumerable<WootOfferDto> returned = JsonSerializer.Deserialize<List<WootOfferDto>>(responseBody2);
                     offers.AddRange(returned);
 
                     j += 25;
@@ -153,6 +148,7 @@ namespace Server.Controllers
             {
                 return BadRequest(e.Message);
             }
+            */
         }
 
         // FIXME: REFACTOR

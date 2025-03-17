@@ -22,14 +22,28 @@ namespace Server.Services
         }
 
         /// <summary>
-        /// Retrieve live minified Woot! offers in the "Computers" category
-        /// from the Woot! Developer API endpoint, documented at https://developer.woot.com/#getnamedfeed
+        /// Retrieve live minified Woot! offers in the "Computers/Desktops" 
+        /// and "Computers/Laptops" categories from the Woot! Developer API endpoint, 
+        /// documented at https://developer.woot.com/#getnamedfeed
         /// </summary>
-        /// <returns>The feed of minified offers for the "Computers" category.</returns>
-        public async Task<WootNamedFeedDto?> GetComputers() {
+        /// <returns>
+        /// The minified Woot! offers, filtered for the "Computers/Desktops"
+        /// and "Computers/Laptops" categories.
+        /// </returns>
+        public async Task<IEnumerable<WootFeedItemDto>> GetComputers() {
+            // Call the GetNamedFeed endpoint in Woot! Developer API.
             using HttpResponseMessage response = await _httpClient.GetAsync("feed/Computers");
+
+            // Deserialize the response body into WootMinifiedDtos.
             var responseBody = response.Content.ReadAsStream();
-            return JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
+            WootNamedFeedDto feed = JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
+
+            // Filter for Desktops and Laptops (and thus exclude e.g., Peripherals, Tablets).
+            IEnumerable<WootFeedItemDto> items = feed.Items.Where(o =>
+                    o.Categories.Contains("PC/Desktops") ||
+                    o.Categories.Contains("PC/Laptops"));
+
+            return items;
         }
     }
 }
