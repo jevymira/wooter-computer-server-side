@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Model;
 using NuGet.Packaging;
 using Server.Dtos;
+using Server.Services;
 
 namespace Server.Controllers
 {
@@ -22,10 +23,12 @@ namespace Server.Controllers
     [ApiController]
     public class OffersController(
         WootComputersSourceContext context,
-        IConfiguration config) : ControllerBase
+        IConfiguration config,
+        WootService wootService) : ControllerBase
     {
         private readonly WootComputersSourceContext _context = context;
         private readonly IConfiguration _config = config;
+        private readonly WootService _wootService = wootService;
 
         // GET: api/Offers
         [HttpGet]

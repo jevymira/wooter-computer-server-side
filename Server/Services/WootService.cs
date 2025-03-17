@@ -1,4 +1,6 @@
-﻿using System.Net.Http.Headers;
+﻿using Server.Dtos;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace Server.Services
 {
@@ -17,6 +19,17 @@ namespace Server.Services
             // Secret Manager tool (development), see:
             // https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-8.0&tabs=windows
             _httpClient.DefaultRequestHeaders.Add("x-api-key", config["Woot:DeveloperApiKey"]);
+        }
+
+        /// <summary>
+        /// Retrieve live minified Woot! offers in the "Computers" category
+        /// from the Woot! Developer API endpoint, documented at https://developer.woot.com/#getnamedfeed
+        /// </summary>
+        /// <returns>The feed of minified offers for the "Computers" category.</returns>
+        public async Task<WootNamedFeedDto?> GetComputers() {
+            using HttpResponseMessage response = await _httpClient.GetAsync("feed/Computers");
+            var responseBody = response.Content.ReadAsStream();
+            return JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
         }
     }
 }

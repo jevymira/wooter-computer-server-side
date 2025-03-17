@@ -13,7 +13,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<WootComputersSourceContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+// Rather than instantiating (multiple) HttpClients directly, see:
+// https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
 builder.Services.AddHttpClient<WootService>();
+builder.Services.AddScoped<WootService>();
 
 var app = builder.Build();
 
