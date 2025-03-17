@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Model;
+using Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<WootComputersSourceContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+builder.Services.AddHttpClient<WootService>();
 
 var app = builder.Build();
 
