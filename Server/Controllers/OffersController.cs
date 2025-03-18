@@ -88,7 +88,8 @@ namespace Server.Controllers
         public async Task<IActionResult> LoadOffers()
         {
             var feed = await _wootService.GetComputers();
-            var offers = await _wootService.GetAllPropertiesForFeedItems(feed);
+            var wootOffers = await _wootService.GetAllPropertiesForFeedItems(feed);
+            var offers = await _wootService.BuildOffers(wootOffers);
             return Ok(offers);
         }
 

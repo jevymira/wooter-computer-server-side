@@ -1,8 +1,10 @@
-﻿using NuGet.Packaging;
+﻿using Model;
+using NuGet.Packaging;
 using Server.Dtos;
 using System;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Server.Services
@@ -75,7 +77,136 @@ namespace Server.Services
 
                 // Deserialize the response body into WootOfferDtos.
                 var responseBody = response.Content.ReadAsStream();
-                offers.AddRange(JsonSerializer.Deserialize<IEnumerable<WootOfferDto>>(responseBody));
+                offers.AddRange(JsonSerializer.Deserialize<ICollection<WootOfferDto>>(responseBody));
+            }
+
+            return offers;
+        }
+
+        public async Task<ICollection<Offer>> BuildOffers(ICollection<WootOfferDto> wootOffers)
+        {
+            ICollection<Offer> offers = new List<Offer>();
+
+            foreach (var wootOffer in wootOffers) {
+                Offer offer = new()
+                {
+                    WootId = wootOffer.WootId,
+                    Category = "PLACEHOLDER",
+                    Title = wootOffer.Title,
+                    Photo = wootOffer.Photo,
+                    IsSoldOut = wootOffer.IsSoldOut,
+                    Condition = "PLACEHOLDER",
+                    Url = wootOffer.Url,
+                };
+
+                foreach (WootOfferItemDto item in wootOffer.Items)
+                {
+                    WootOfferItemAttributeDto? a = item.Attributes.Where(x => x.Key == "Model").FirstOrDefault();
+                    string s = string.Empty;
+                    if (a != null)
+                    {
+                        s = a.Value.ToString();
+                    }
+
+                    // Regular expression to extract specifications.
+                    var regex = new Regex(@"([0-9]{1,2})GB.+([0-9]{3})GB");
+                    var match = regex.Match(s);
+
+                    short memory = 0;
+                    short storage = 0;
+
+                    // if offer has only one model/configuration
+                    if (wootOffer.Items.Count == 1)
+                    {
+                        regex = new Regex(@"([0-9]{1,2})GB");
+                        match = regex.Match(wootOffer.FullTitle);
+
+                        if (match.Groups[1].Success)
+                        {
+                            memory = Int16.Parse(match.Groups[1].Value);
+                        }
+
+                        regex = new Regex(@"([0-9]{3})GB");
+                        match = regex.Match(wootOffer.FullTitle);
+
+                        if (match.Groups[1].Success)
+                        {
+                            storage = Int16.Parse(match.Groups[1].Value);
+                        }
+                        else
+                        {
+                            regex = new Regex(@"([1-9]{1,2})TB");
+                            match = regex.Match(wootOffer.FullTitle);
+
+                            if (match.Groups[1].Success)
+                            {
+                                storage = Int16.Parse(match.Groups[1].Value);
+                                storage *= 1000;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (!(match.Success))
+                        {
+                            regex = new Regex(@"([0-9]{1,2})GB");
+                            match = regex.Match(s);
+                        }
+
+                        // assign memory
+                        if (match.Groups[1].Success)
+                        {
+                            memory = Int16.Parse(match.Groups[1].Value);
+                        }
+
+                        // assign storage
+                        if (match.Groups[2].Success)
+                        {
+                            storage = Int16.Parse(match.Groups[2].Value);
+                        }
+                        else
+                        {
+                            // otherwise, check the listing-wide "Specs" property
+                            regex = new Regex(@"([0-9]{3})GB");
+                            match = regex.Match(wootOffer.FullTitle);
+
+                            if (match.Groups[1].Success)
+                            {
+                                storage = Int16.Parse(match.Groups[1].Value);
+                            }
+
+                            if (wootOffer.FullTitle.Contains("TB"))
+                            {
+                                regex = new Regex(@"([1-9]{1,2})TB");
+                                match = regex.Match(wootOffer.FullTitle);
+
+                                if (match.Groups[1].Success)
+                                {
+                                    storage = Int16.Parse(match.Groups[1].Value);
+                                    storage *= 1000;
+                                }
+                            }
+                        }
+                    }
+
+                    // FIXME: remove Model. namespace prefix once renamed
+                    offer.Configurations.Add(new Model.Configuration
+                    {
+                        WootId = item.Id,
+                        Processor = string.Empty,
+                        MemoryCapacity = memory,
+                        StorageSize = storage,
+                        Price = item.SalePrice
+                    });
+                }
+
+                if (offer.Configurations.First().Processor == null ||
+                    offer.Configurations.First().Processor == String.Empty)
+                {
+                    offer.Configurations.First().Processor = "SINGLE MODEL";
+                };
+
+                offers.Add(offer);
             }
 
             return offers;

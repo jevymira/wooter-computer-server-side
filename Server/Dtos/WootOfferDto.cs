@@ -4,7 +4,7 @@ namespace Server.Dtos
 {
     public class WootOfferDto
     {
-        [JsonPropertyName("OfferId")]
+        [JsonPropertyName("Id")]
         public Guid WootId { get; set; }
 
         public string[] Categories { get; set; } = null!;
@@ -19,7 +19,7 @@ namespace Server.Dtos
 
         public string Url { get; set; } = null!;
 
-        public string Specs { get; set; } = null!;
+        public string FullTitle { get; set; } = null!;
 
         public ICollection<WootOfferItemDto> Items { get; set; } = new List<WootOfferItemDto>();
     }
