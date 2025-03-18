@@ -1,6 +1,9 @@
-﻿using Server.Dtos;
+﻿using NuGet.Packaging;
+using Server.Dtos;
+using System;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Server.Services
 {
@@ -23,7 +26,7 @@ namespace Server.Services
 
         /// <summary>
         /// Retrieve live minified Woot! offers in the "Computers/Desktops" 
-        /// and "Computers/Laptops" categories from the Woot! Developer API endpoint, 
+        /// and "Computers/Laptops" categories from the Woot! API GetNamedFeed endpoint, 
         /// documented at https://developer.woot.com/#getnamedfeed
         /// </summary>
         /// <returns>
@@ -31,7 +34,7 @@ namespace Server.Services
         /// and "Computers/Laptops" categories.
         /// </returns>
         public async Task<IEnumerable<WootFeedItemDto>> GetComputers() {
-            // Call the GetNamedFeed endpoint in Woot! Developer API.
+            // Call the GetNamedFeed endpoint in the Woot! Developer API.
             using HttpResponseMessage response = await _httpClient.GetAsync("feed/Computers");
 
             // Deserialize the response body into WootMinifiedDtos.
@@ -44,6 +47,38 @@ namespace Server.Services
                     o.Categories.Contains("PC/Laptops"));
 
             return items;
+        }
+
+        /// <summary>
+        /// Retrieve the requested offers with all their properties from the Woot! API
+        /// GetOffers endpoint, documented at https://developer.woot.com/#getoffers
+        /// </summary>
+        /// <param name="items">The Woot! API Feed Items (minified offers).</param>
+        /// <returns>The corresponding Woot! offers with all their properties.</returns>
+        public async Task<ICollection<WootOfferDto>> GetAllPropertiesForFeedItems(
+            ICollection<WootFeedItemDto> items)
+        {
+            ICollection<WootOfferDto> offers = new List<WootOfferDto>();
+
+            // Iterate through in increments of 25 feed items per loop,
+            // because the Woot! API's GetOffers endpoint enforces a 25-offer maximum.
+            for (int i = 0; i < items.Count; i += 25)
+            {
+                var increment = items.Skip(i).Take(25);
+                // Extract the OfferId of each FeedItem.
+                IEnumerable<Guid> ids = increment.Select(items => items.OfferId).ToList();
+
+                // Assemble the body parameter for the request to the GetOffers Woot! API endpoint.
+                HttpContent content = new StringContent(JsonSerializer.Serialize(ids));
+
+                using HttpResponseMessage response = await _httpClient.PostAsync("getoffers", content);
+
+                // Deserialize the response body into WootOfferDtos.
+                var responseBody = response.Content.ReadAsStream();
+                offers.AddRange(JsonSerializer.Deserialize<IEnumerable<WootOfferDto>>(responseBody));
+            }
+
+            return offers;
         }
     }
 }
