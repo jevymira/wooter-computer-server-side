@@ -87,68 +87,9 @@ namespace Server.Controllers
         [HttpGet("load")]
         public async Task<IActionResult> LoadOffers()
         {
-            return NoContent();
-
-            /*
-            var uri = $"https://developer.woot.com/feed/Computers";
-
-            HttpClient client = new HttpClient(); // FIXME: use HTTPClientFactory
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            // Secret Manager tool (development), see:
-            // https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-8.0&tabs=windows
-            client.DefaultRequestHeaders.Add("x-api-key", _config["Woot:DeveloperApiKey"]);
-
-            // HttpResponseMessage, see:
-            // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpresponsemessage?view=net-8.0
-            try
-            {
-                using HttpResponseMessage response = await client.GetAsync(uri);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                WootNamedFeedDto? feed = JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
-                IEnumerable<WootFeedItemDto>? query = feed.Items.Where(o =>
-                    o.Categories.Contains("PC/Desktops") ||
-                    o.Categories.Contains("PC/Laptops"));
-                int i = query.Count();
-
-                uri = $"https://developer.woot.com/getoffers";
-                
-                ICollection<WootOfferDto> offers = new List<WootOfferDto>();
-
-                int j = 0;
-
-                // iterate through in increments of 25 offers (Woot API POST request body has a 25 offer max.)
-                while (j < i)
-                {
-                    HttpClient client2 = new HttpClient(); // FIXME: use HTTPClientFactory
-                    client2.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                    client2.DefaultRequestHeaders.Add("x-api-key", _config["Woot:DeveloperApiKey"]);
-                    // Woot schema requires array of IDs
-                    var offerIncrement = query.Skip(j).Take(25);
-                    List<Guid> ids = new List<Guid>();
-                    foreach (WootFeedItemDto offer in offerIncrement)
-                    {
-                        ids.Add(offer.OfferId);
-                    }
-                    HttpContent content = new StringContent(JsonSerializer.Serialize(ids));
-
-                    using HttpResponseMessage response2 = await client2.PostAsync(uri, content);
-                    response2.EnsureSuccessStatusCode();
-                    string responseBody2 = await response2.Content.ReadAsStringAsync();
-
-                    IEnumerable<WootOfferDto> returned = JsonSerializer.Deserialize<List<WootOfferDto>>(responseBody2);
-                    offers.AddRange(returned);
-
-                    j += 25;
-                }
-                return Ok(offers);
-            }
-            catch (HttpRequestException e)
-            {
-                return BadRequest(e.Message);
-            }
-            */
+            var feed = await _wootService.GetComputers();
+            var offers = await _wootService.GetAllPropertiesForFeedItems(feed);
+            return Ok(offers);
         }
 
         // FIXME: REFACTOR

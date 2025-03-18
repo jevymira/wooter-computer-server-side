@@ -56,13 +56,13 @@ namespace Server.Services
         /// <param name="items">The Woot! API Feed Items (minified offers).</param>
         /// <returns>The corresponding Woot! offers with all their properties.</returns>
         public async Task<ICollection<WootOfferDto>> GetAllPropertiesForFeedItems(
-            ICollection<WootFeedItemDto> items)
+            IEnumerable<WootFeedItemDto> items)
         {
             ICollection<WootOfferDto> offers = new List<WootOfferDto>();
 
             // Iterate through in increments of 25 feed items per loop,
             // because the Woot! API's GetOffers endpoint enforces a 25-offer maximum.
-            for (int i = 0; i < items.Count; i += 25)
+            for (int i = 0; i < items.Count(); i += 25)
             {
                 var increment = items.Skip(i).Take(25);
                 // Extract the OfferId of each FeedItem.
