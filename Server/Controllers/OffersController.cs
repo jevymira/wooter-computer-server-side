@@ -90,7 +90,11 @@ namespace Server.Controllers
             var feed = await _wootService.GetComputers();
             var wootOffers = await _wootService.GetAllPropertiesForFeedItems(feed);
             var offers = await _wootService.BuildOffers(wootOffers);
-            return Ok(offers);
+
+            _context.AddRange(offers);
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
 
         // FIXME: REFACTOR
