@@ -7,7 +7,10 @@ namespace Server.Dtos
         [JsonPropertyName("Id")]
         public Guid WootId { get; set; }
 
+        // FIXME: To be deprecated and removed.
         public string[] Categories { get; set; } = null!;
+
+        public string Category { get; set; } = string.Empty;
 
         public string Title { get; set; } = null!;
 

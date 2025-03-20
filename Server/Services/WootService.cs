@@ -60,6 +60,26 @@ namespace Server.Services
         public async Task<ICollection<WootOfferDto>> GetAllPropertiesForFeedItems(
             IEnumerable<WootFeedItemDto> items)
         {
+            Dictionary<Guid,string> categoriesById = [];
+
+            // Store category, for when after full offers (which exclude category info)
+            // are retrieved from the Woot! API.
+            // FIXME: May be better implemented at the point of filtering,
+            // see the GetComputers method.
+            foreach (var item in items)
+            {
+                string s = string.Empty;
+                if (item.Categories.Contains("PC/Desktops"))
+                {
+                    s = "Desktops";
+                }
+                else if (item.Categories.Contains("PC/Laptops"))
+                {
+                    s = "Laptops";
+                }
+                categoriesById.Add(item.OfferId, s);
+            }
+
             ICollection<WootOfferDto> offers = new List<WootOfferDto>();
 
             // Iterate through in increments of 25 feed items per loop,
@@ -80,6 +100,13 @@ namespace Server.Services
                 offers.AddRange(JsonSerializer.Deserialize<ICollection<WootOfferDto>>(responseBody));
             }
 
+            // Re-assign category.
+            foreach (var offer in offers)
+            {
+                categoriesById.TryGetValue(offer.WootId, out string category);
+                offer.Category = category;
+            }
+
             return offers;
         }
 
@@ -91,7 +118,7 @@ namespace Server.Services
                 Offer offer = new()
                 {
                     WootId = wootOffer.WootId,
-                    Category = "PLACEHOLDER",
+                    Category = wootOffer.Category,
                     Title = wootOffer.Title,
                     Photo = wootOffer.Photo,
                     IsSoldOut = wootOffer.IsSoldOut,

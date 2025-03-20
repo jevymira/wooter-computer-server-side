@@ -94,7 +94,7 @@ namespace Server.Controllers
             _context.AddRange(offers);
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(offers);
         }
 
         // FIXME: REFACTOR
