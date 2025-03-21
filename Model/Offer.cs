@@ -23,5 +23,5 @@ public partial class Offer
 
     public string Url { get; set; } = null!;
 
-    public virtual ICollection<Configuration> Configurations { get; set; } = new List<Configuration>();
+    public virtual ICollection<HardwareConfiguration> Configurations { get; set; } = new List<HardwareConfiguration>();
 }

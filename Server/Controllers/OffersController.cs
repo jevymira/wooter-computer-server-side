@@ -150,8 +150,7 @@ namespace Server.Controllers
                         storage *= 1000;
                     }
 
-                    // FIXME: remove Model. namespace prefix once renamed
-                    offer.Configurations.Add(new Model.Configuration
+                    offer.Configurations.Add(new HardwareConfiguration
                     {
                         WootId = item.Id,
                         Processor = string.Empty,

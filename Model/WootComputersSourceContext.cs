@@ -15,7 +15,7 @@ public partial class WootComputersSourceContext : DbContext
     {
     }
 
-    public virtual DbSet<Configuration> Configurations { get; set; }
+    public virtual DbSet<HardwareConfiguration> Configurations { get; set; }
 
     public virtual DbSet<Offer> Offers { get; set; }
 
@@ -25,7 +25,7 @@ public partial class WootComputersSourceContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Configuration>(entity =>
+        modelBuilder.Entity<HardwareConfiguration>(entity =>
         {
             entity.ToTable("Configuration");
 

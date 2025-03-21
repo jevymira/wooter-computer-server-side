@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Model;
 
-public partial class Configuration
+public partial class HardwareConfiguration
 {
     public int Id { get; set; }
 
