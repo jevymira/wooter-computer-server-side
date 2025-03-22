@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Model;
+using Server;
 using Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,10 @@ builder.Services.AddDbContext<WootComputersSourceContext>(options =>
 // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
 builder.Services.AddHttpClient<WootService>();
 builder.Services.AddScoped<WootService>();
+builder.Services.AddHostedService<WootWorkerService>();
+
+// Logging WootWorkerService.
+// builder.Services.AddLogging(builder => builder.AddConsole());
 
 var app = builder.Build();
 
