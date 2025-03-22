@@ -1,20 +1,6 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Security.Policy;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Model;
-using NuGet.Packaging;
-using Server.Dtos;
 using Server.Services;
 
 namespace Server.Controllers
@@ -23,11 +9,9 @@ namespace Server.Controllers
     [ApiController]
     public class OffersController(
         WootComputersSourceContext context,
-        IConfiguration config,
         WootService wootService) : ControllerBase
     {
         private readonly WootComputersSourceContext _context = context;
-        private readonly IConfiguration _config = config;
         private readonly WootService _wootService = wootService;
 
         // GET: api/Offers
@@ -82,98 +66,6 @@ namespace Server.Controllers
             */
 
             return NoContent();
-        }
-
-        [HttpGet("load")]
-        public async Task<IActionResult> LoadOffers()
-        {
-            var feed = await _wootService.GetComputers();
-            var wootOffers = await _wootService.GetAllPropertiesForFeedItems(feed);
-            var offers = await _wootService.BuildOffers(wootOffers);
-
-            _context.AddRange(offers);
-            await _context.SaveChangesAsync();
-
-            return Ok(offers);
-        }
-
-        // FIXME: REFACTOR
-        [HttpPut("load/{id}")]
-        public async Task<IActionResult> LoadOffer(Guid id)
-        {
-            var uri = $"https://developer.woot.com/offers/{id}";
-
-            HttpClient client = new HttpClient(); // FIXME: use HTTPClientFactory
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            // Secret Manager tool (development), see:
-            // https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-8.0&tabs=windows
-            client.DefaultRequestHeaders.Add("x-api-key", _config["Woot:DeveloperApiKey"]);
-
-            // HttpResponseMessage, see:
-            // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpresponsemessage?view=net-8.0
-            try
-            {
-                using HttpResponseMessage response = await client.GetAsync(uri);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-                WootOfferDto? offerDto = JsonSerializer.Deserialize<WootOfferDto>(responseBody);
-
-                Offer offer = new()
-                {
-                    WootId = id,
-                    Category = "PLACEHOLDER",
-                    Title = offerDto.Title,
-                    Photo = offerDto.Photo,
-                    IsSoldOut = offerDto.IsSoldOut,
-                    Condition = "PLACEHOLDER",
-                    Url = offerDto.Url,
-                };
-
-
-                // items is a Woot! catch-all; more specifically called "Models" for electronics (or "Configurations" on other retailers)
-                foreach (WootOfferItemDto item in offerDto.Items)
-                {
-                    WootOfferItemAttributeDto? a = item.Attributes.Where(x => x.Key == "Model").FirstOrDefault();
-                    string s = string.Empty;
-                    if (a != null)
-                    {
-                        s = a.Value.ToString();
-                    }
-
-                    // regular expression to extract specifications
-                    var regex = new Regex(@"([0-9]{1,2})GB\W+([0-9]{1,4})");
-                    var match = regex.Match(s);
-
-                    short storage = Int16.Parse(match.Groups[2].Value);
-                    if (s.Contains("TB")) { // FIXME: perform more specific check
-                        // 1000GB per 1TB
-                        storage *= 1000;
-                    }
-
-                    offer.Configurations.Add(new HardwareConfiguration
-                    {
-                        WootId = item.Id,
-                        Processor = string.Empty,
-                        MemoryCapacity = Int16.Parse(match.Groups[1].Value),
-                        StorageSize = storage,
-                        Price = item.SalePrice
-                    });
-                }
-
-                if (offer.Configurations.First().Processor == null ||
-                    offer.Configurations.First().Processor == String.Empty)
-                {
-                    offer.Configurations.First().Processor = "SINGLE MODEL";
-                };
-
-                _context.Offers.Add(offer);
-                await _context.SaveChangesAsync();
-                return Ok();
-            }
-            catch (HttpRequestException e)
-            {
-                return BadRequest(e.Message);
-            }
         }
 
         // POST: api/Offers
