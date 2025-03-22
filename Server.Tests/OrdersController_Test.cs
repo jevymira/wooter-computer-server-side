@@ -1,12 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Model;
-using Server;
 using Server.Controllers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.Tests
 {
@@ -15,13 +9,14 @@ namespace Server.Tests
         /// <summary>
         /// Test the GetOffer() method.
         /// </summary>
+        [Fact]
         public async Task GetOffer()
         {
             // Arrange  
-            var options = new DbContextOptionsBuilder<DbContext>()
+            var options = new DbContextOptionsBuilder<WootComputersSourceContext>()
                 .UseInMemoryDatabase(databaseName: "WootComputers")
-            .Options;
-            using var context = new DbContext(options);
+                .Options;
+            using var context = new WootComputersSourceContext(options);
             context.Add(new Offer()
             {
                 Id = 1,
@@ -32,7 +27,18 @@ namespace Server.Tests
                 Url = "https://computers.woot.com/offers/dell-optiplex-7070-micro-desktop-mini-pc-5"
             });
             context.SaveChanges();
+
             var controller = new OffersController(context);
+            Offer? offer_existing = null;
+            Offer? offer_notExisting = null;
+
+            // Act
+            offer_existing = (await controller.GetOffer(1)).Value;
+            offer_notExisting  = (await controller.GetOffer(2)).Value;
+
+            // Assert
+            Assert.NotNull(offer_existing);
+            Assert.Null(offer_notExisting);
         }
     }
 }

@@ -7,12 +7,9 @@ namespace Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class OffersController(
-        WootComputersSourceContext context,
-        WootService wootService) : ControllerBase
+    public class OffersController(WootComputersSourceContext context) : ControllerBase
     {
         private readonly WootComputersSourceContext _context = context;
-        private readonly WootService _wootService = wootService;
 
         // GET: api/Offers
         [HttpGet]
