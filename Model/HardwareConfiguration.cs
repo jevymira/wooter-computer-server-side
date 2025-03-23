@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Model;
 
+[Table("Configuration")]
 public partial class HardwareConfiguration
 {
+    [Key]
     public int Id { get; set; }
 
     public Guid WootId { get; set; }
@@ -26,7 +30,9 @@ public partial class HardwareConfiguration
     /// </remarks>
     public decimal Price { get; set; }
 
+    [ForeignKey(nameof(Offer))]
     public int OfferId { get; set; }
 
+    [InverseProperty("Configurations")]
     public virtual Offer Offer { get; set; } = null!;
 }
