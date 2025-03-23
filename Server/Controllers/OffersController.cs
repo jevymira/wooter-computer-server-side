@@ -13,9 +13,14 @@ namespace Server.Controllers
 
         // GET: api/Offers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Offer>>> GetOffers()
+        public async Task<ActionResult<IEnumerable<Offer>>> GetOffers(
+            [FromQuery] string category)
         {
-            return await _context.Offers.ToListAsync();
+            var offers = await _context.Offers
+                .Where(o => o.Category.Equals(category))
+                .ToListAsync();
+
+            return offers;
         }
 
         // GET: api/Offers/5
