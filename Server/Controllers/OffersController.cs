@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Model;
+using Server.Dtos;
 using Server.Services;
+using System;
 
 namespace Server.Controllers
 {
@@ -13,28 +15,61 @@ namespace Server.Controllers
 
         // GET: api/Offers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Offer>>> GetOffers(
+        public async Task<ActionResult<IEnumerable<OfferItemDto>>> GetOffers(
             [FromQuery] string category)
         {
             var offers = await _context.Offers
                 .Where(o => o.Category.Equals(category))
+                .Include(c => c.Configurations)
                 .ToListAsync();
+            
+            List<OfferItemDto> items = [];
 
-            return offers;
+            foreach (var offer in offers)
+            {
+                foreach (var config in offer.Configurations)
+                {
+                    items.Add(new OfferItemDto()
+                    {
+                        Id = config.Id,
+                        Category = offer.Category,
+                        Title = offer.Title,
+                        MemoryCapacity = config.MemoryCapacity,
+                        StorageSize = config.StorageSize,
+                        Price = config.Price,
+                        IsSoldOut = offer.IsSoldOut,
+                        Url = offer.Url,
+                    });
+                }
+            }
+
+            return items;
         }
 
         // GET: api/Offers/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Offer>> GetOffer(int id)
+        public async Task<ActionResult<OfferItemDto>> GetOffer(int id)
         {
-            var offer = await _context.Offers.FindAsync(id);
+            var item = await _context.Configurations
+                .Where(config => config.Id.Equals(id))
+                .Select(config => new OfferItemDto
+                {
+                    Id = config.Id,
+                    Category = config.Offer.Category,
+                    Title = config.Offer.Title,
+                    MemoryCapacity = config.MemoryCapacity,
+                    StorageSize = config.StorageSize,
+                    Price = config.Price,
+                    IsSoldOut = config.Offer.IsSoldOut,
+                    Url = config.Offer.Url,
+                }).SingleAsync();
 
-            if (offer == null)
+            if (item == null)
             {
                 return NotFound();
             }
 
-            return offer;
+            return item;
         }
 
         // PUT: api/Offers/5
