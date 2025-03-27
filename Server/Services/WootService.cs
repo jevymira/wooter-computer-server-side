@@ -142,58 +142,21 @@ namespace Server.Services
                     short memory = 0;
                     short storage = 0;
 
-                    // if offer has only one model/configuration
-                    if (wootOffer.Items.Count == 1)
+                    // TODO: refactor for readability & tests
+                    // temp. solution for single object from the Woot! API w/out FullTitle
+                    if (wootOffer.FullTitle != null)
                     {
-                        regex = new Regex(@"([0-9]{1,2})GB");
-                        match = regex.Match(wootOffer.FullTitle);
-
-                        if (match.Groups[1].Success)
+                        // if offer has only one model/configuration
+                        if (wootOffer.Items.Count == 1)
                         {
-                            memory = Int16.Parse(match.Groups[1].Value);
-                        }
-
-                        regex = new Regex(@"([0-9]{3})GB");
-                        match = regex.Match(wootOffer.FullTitle);
-
-                        if (match.Groups[1].Success)
-                        {
-                            storage = Int16.Parse(match.Groups[1].Value);
-                        }
-                        else
-                        {
-                            regex = new Regex(@"([1-9]{1,2})TB");
+                            regex = new Regex(@"([0-9]{1,2})GB");
                             match = regex.Match(wootOffer.FullTitle);
 
                             if (match.Groups[1].Success)
                             {
-                                storage = Int16.Parse(match.Groups[1].Value);
-                                storage *= 1000;
+                                memory = Int16.Parse(match.Groups[1].Value);
                             }
-                        }
-                    }
-                    else
-                    {
-                        if (!(match.Success))
-                        {
-                            regex = new Regex(@"([0-9]{1,2})GB");
-                            match = regex.Match(s);
-                        }
 
-                        // assign memory
-                        if (match.Groups[1].Success)
-                        {
-                            memory = Int16.Parse(match.Groups[1].Value);
-                        }
-
-                        // assign storage
-                        if (match.Groups[2].Success)
-                        {
-                            storage = Int16.Parse(match.Groups[2].Value);
-                        }
-                        else
-                        {
-                            // otherwise, check the listing-wide "Specs" property
                             regex = new Regex(@"([0-9]{3})GB");
                             match = regex.Match(wootOffer.FullTitle);
 
@@ -201,8 +164,7 @@ namespace Server.Services
                             {
                                 storage = Int16.Parse(match.Groups[1].Value);
                             }
-
-                            if (wootOffer.FullTitle.Contains("TB"))
+                            else
                             {
                                 regex = new Regex(@"([1-9]{1,2})TB");
                                 match = regex.Match(wootOffer.FullTitle);
@@ -214,24 +176,69 @@ namespace Server.Services
                                 }
                             }
                         }
-                    }
+                        else
+                        {
+                            if (!(match.Success))
+                            {
+                                regex = new Regex(@"([0-9]{1,2})GB");
+                                match = regex.Match(s);
+                            }
 
-                    // FIXME: remove Model. namespace prefix once renamed
-                    offer.Configurations.Add(new HardwareConfiguration
-                    {
-                        WootId = item.Id,
-                        Processor = string.Empty,
-                        MemoryCapacity = memory,
-                        StorageSize = storage,
-                        Price = item.SalePrice
-                    });
+                            // assign memory
+                            if (match.Groups[1].Success)
+                            {
+                                memory = Int16.Parse(match.Groups[1].Value);
+                            }
+
+                            // assign storage
+                            if (match.Groups[2].Success)
+                            {
+                                storage = Int16.Parse(match.Groups[2].Value);
+                            }
+                            else
+                            {
+                                // otherwise, check the listing-wide "Specs" property
+                                regex = new Regex(@"([0-9]{3})GB");
+                                match = regex.Match(wootOffer.FullTitle);
+
+                                if (match.Groups[1].Success)
+                                {
+                                    storage = Int16.Parse(match.Groups[1].Value);
+                                }
+
+                                if (wootOffer.FullTitle.Contains("TB"))
+                                {
+                                    regex = new Regex(@"([1-9]{1,2})TB");
+                                    match = regex.Match(wootOffer.FullTitle);
+
+                                    if (match.Groups[1].Success)
+                                    {
+                                        storage = Int16.Parse(match.Groups[1].Value);
+                                        storage *= 1000;
+                                    }
+                                }
+                            }
+                        }
+
+                        // FIXME: remove Model. namespace prefix once renamed
+                        offer.Configurations.Add(new HardwareConfiguration
+                        {
+                            WootId = item.Id,
+                            Processor = string.Empty,
+                            MemoryCapacity = memory,
+                            StorageSize = storage,
+                            Price = item.SalePrice
+                        });
+                    }
                 }
 
+                /*
                 if (offer.Configurations.First().Processor == null ||
                     offer.Configurations.First().Processor == String.Empty)
                 {
                     offer.Configurations.First().Processor = "SINGLE MODEL";
                 };
+                */
 
                 offers.Add(offer);
             }
