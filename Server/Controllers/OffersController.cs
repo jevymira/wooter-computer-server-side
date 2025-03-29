@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Model;
 using Server.Dtos;
 using Server.Services;
@@ -16,13 +17,15 @@ namespace Server.Controllers
         // GET: api/Offers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OfferItemDto>>> GetOffers(
-            [FromQuery] string category,
+            [FromQuery] string? category,
             [FromQuery] List<short> memory)
         {
             var offers = await _context.Offers
-                .Where(o => o.Category.Equals(category))
+                .Where(o => o.Category.Equals(category)
+                         || category.IsNullOrEmpty())
                 .Include(c => c.Configurations
-                    .Where(c => memory.Contains(c.MemoryCapacity)))
+                    .Where(c => memory.Contains(c.MemoryCapacity) 
+                             || memory.IsNullOrEmpty())) // empty query param
                 .ToListAsync();
             
             List<OfferItemDto> items = [];
