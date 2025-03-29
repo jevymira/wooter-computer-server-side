@@ -16,11 +16,13 @@ namespace Server.Controllers
         // GET: api/Offers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OfferItemDto>>> GetOffers(
-            [FromQuery] string category)
+            [FromQuery] string category,
+            [FromQuery] List<short> memory)
         {
             var offers = await _context.Offers
                 .Where(o => o.Category.Equals(category))
-                .Include(c => c.Configurations)
+                .Include(c => c.Configurations
+                    .Where(c => memory.Contains(c.MemoryCapacity)))
                 .ToListAsync();
             
             List<OfferItemDto> items = [];
