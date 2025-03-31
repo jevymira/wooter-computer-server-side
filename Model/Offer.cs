@@ -18,7 +18,7 @@ public partial class Offer
 
     public string Title { get; set; } = null!;
 
-    public string? Photo { get; set; }
+    public string Photo { get; set; } = null!;
 
     public bool IsSoldOut { get; set; }
 

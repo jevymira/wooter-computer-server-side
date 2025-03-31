@@ -14,7 +14,7 @@ namespace Server.Dtos
 
         public string Title { get; set; } = null!;
 
-        public string? Photo { get; set; }
+        public ICollection<WootOfferPhotoDto> Photos { get; set; } = null!;
 
         public bool IsSoldOut { get; set; }
 

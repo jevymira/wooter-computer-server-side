@@ -126,7 +126,7 @@ namespace Server.Services
                     WootId = wootOffer.WootId,
                     Category = wootOffer.Category,
                     Title = wootOffer.Title,
-                    Photo = wootOffer.Photo,
+                    Photo = wootOffer.Photos.First().Url,
                     IsSoldOut = wootOffer.IsSoldOut,
                     Condition = "PLACEHOLDER",
                     Url = wootOffer.Url,
