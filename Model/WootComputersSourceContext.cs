@@ -20,10 +20,12 @@ public partial class WootComputersSourceContext : DbContext
 
     public virtual DbSet<Offer> Offers { get; set; }
 
-    // FIXME: Add guard condition; required for EF Core migrations
-    // but causes "multiple databases registered" error when unit testing.
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+        if (optionsBuilder.IsConfigured)
+        {
+            return;
+        }
         IConfigurationBuilder builder = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json");
         IConfigurationRoot configuration = builder.Build();
