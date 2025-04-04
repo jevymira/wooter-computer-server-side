@@ -56,7 +56,7 @@ namespace Server.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<OfferItemDto>> GetOffer(int id)
         {
-            var item = await _context.Configurations
+            OfferItemDto? item = await _context.Configurations
                 .Where(config => config.Id.Equals(id))
                 .Select(config => new OfferItemDto
                 {
@@ -69,7 +69,8 @@ namespace Server.Controllers
                     Price = config.Price,
                     IsSoldOut = config.Offer.IsSoldOut,
                     Url = config.Offer.Url,
-                }).SingleAsync();
+                })
+                .SingleOrDefaultAsync();
 
             if (item == null)
             {
