@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Model;
 using Server;
@@ -14,6 +15,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<WootComputersSourceContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+builder.Services.AddIdentity<WooterComputerUser, IdentityRole>()
+    .AddEntityFrameworkStores<WootComputersSourceContext>();
 // Rather than instantiating (multiple) HttpClients directly, see:
 // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
 builder.Services.AddHttpClient<WootService>();
