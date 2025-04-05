@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace Model;
 
-public partial class WootComputersSourceContext : DbContext
+public partial class WootComputersSourceContext : IdentityDbContext<WooterComputerUser>
 {
     public WootComputersSourceContext()
     {
@@ -34,6 +35,8 @@ public partial class WootComputersSourceContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<HardwareConfiguration>(entity =>
         {
             entity.ToTable("Configuration");
