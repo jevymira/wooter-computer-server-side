@@ -19,6 +19,7 @@ builder.Services.AddDbContext<WootComputersSourceContext>(options =>
 );
 builder.Services.AddIdentity<WooterComputerUser, IdentityRole>()
     .AddEntityFrameworkStores<WootComputersSourceContext>();
+builder.Services.AddScoped<JwtHandler>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
