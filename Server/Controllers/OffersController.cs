@@ -24,8 +24,9 @@ namespace Server.Controllers
                 .Where(o => o.Category.Equals(category)
                          || category.IsNullOrEmpty())
                 .Include(c => c.Configurations
-                    .Where(c => memory.Contains(c.MemoryCapacity) 
-                             || memory.IsNullOrEmpty())) // empty query param
+                    .Where(c => memory.IsNullOrEmpty() // empty query param
+                        || (c.MemoryCapacity != 0 // filter out the few malformed configs
+                            && memory.Contains(c.MemoryCapacity))))
                 .ToListAsync();
             
             List<OfferItemDto> items = [];
