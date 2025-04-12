@@ -41,10 +41,11 @@ namespace Server.Services
 
             // Deserialize the response body into WootMinifiedDtos.
             var responseBody = response.Content.ReadAsStream();
-            WootNamedFeedDto feed = JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
+            WootNamedFeedDto? feed = JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
 
             // Filter for Desktops and Laptops (and thus exclude e.g., Peripherals, Tablets).
-            IEnumerable<WootFeedItemDto> items = feed.Items.Where(o =>
+            IEnumerable<WootFeedItemDto> items = feed is null ? new List<WootFeedItemDto>() :
+                feed.Items.Where(o =>
                     o.Categories.Contains("PC/Desktops") ||
                     o.Categories.Contains("PC/Laptops"));
 
