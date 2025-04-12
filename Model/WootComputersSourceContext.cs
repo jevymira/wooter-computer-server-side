@@ -58,7 +58,7 @@ public partial class WootComputersSourceContext : IdentityDbContext<WooterComput
             entity.Property(e => e.Photo)
                 .HasMaxLength(150)
                 .IsUnicode(false);
-            entity.Property(e => e.Title).HasMaxLength(100);
+            entity.Property(e => e.Title).HasMaxLength(200);
             entity.Property(e => e.Url).HasMaxLength(150);
 
             entity.HasAlternateKey(e => e.WootId);
