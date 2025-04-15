@@ -22,8 +22,8 @@ namespace Server.Controllers
             [FromQuery] List<short> storage)
         {
             var offers = await _context.Offers
-                .Where(o => o.Category.Equals(category)
-                         || category.IsNullOrEmpty())
+                .Where(o => (category.IsNullOrEmpty() || o.Category.Equals(category))
+                    && !o.IsSoldOut)
                 .Include(c => c.Configurations
                     .Where(c => memory.IsNullOrEmpty() // empty query param
                         || (c.MemoryCapacity != 0 // filter out the few malformed configs
