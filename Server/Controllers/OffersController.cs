@@ -18,7 +18,8 @@ namespace Server.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OfferItemDto>>> GetOffers(
             [FromQuery] string? category,
-            [FromQuery] List<short> memory)
+            [FromQuery] List<short> memory,
+            [FromQuery] List<short> storage)
         {
             var offers = await _context.Offers
                 .Where(o => o.Category.Equals(category)
@@ -26,7 +27,10 @@ namespace Server.Controllers
                 .Include(c => c.Configurations
                     .Where(c => memory.IsNullOrEmpty() // empty query param
                         || (c.MemoryCapacity != 0 // filter out the few malformed configs
-                            && memory.Contains(c.MemoryCapacity))))
+                            && memory.Contains(c.MemoryCapacity)))
+                    .Where(c=> storage.IsNullOrEmpty() // AND across filter types
+                        || (c.StorageSize != 0
+                            && storage.Contains(c.StorageSize)))) // OR within filter types
                 .ToListAsync();
             
             List<OfferItemDto> items = [];
