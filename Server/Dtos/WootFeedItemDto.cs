@@ -7,5 +7,7 @@
         public Guid OfferId { get; set; }
 
         public string[] Categories { get; set; } = null!;
+
+        public bool IsSoldOut { get; set; }
     }
 }

@@ -31,6 +31,20 @@ namespace Server
                     }
                 }
 
+                IEnumerable<Guid> liveOfferIds = feed
+                    .Where(o => !o.IsSoldOut) // Not all sold out offers are returned.
+                    .Select(o => o.OfferId);
+                if (liveOfferIds.Any()) // Guard against faulty/empty responses.
+                {
+                    // Check existing offers against the collection of live offer ids.
+                    var endedOffers = context.Offers.Where(o => !liveOfferIds.Contains(o.WootId));
+
+                    foreach (var offer in endedOffers)
+                    {
+                        offer.IsSoldOut = true;
+                    }
+                }
+
                 await context.SaveChangesAsync();
             }
 
