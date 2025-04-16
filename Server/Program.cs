@@ -48,7 +48,7 @@ builder.Services.AddScoped<WootService>();
 builder.Services.AddHostedService<WootWorkerService>();
 
 // Logging WootWorkerService.
-// builder.Services.AddLogging(builder => builder.AddConsole());
+builder.Services.AddLogging(builder => builder.AddConsole());
 
 var app = builder.Build();
 

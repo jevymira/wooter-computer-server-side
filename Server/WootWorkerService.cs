@@ -1,4 +1,5 @@
 ﻿using Model;
+using Server.Dtos;
 using Server.Services;
 
 namespace Server
@@ -17,21 +18,10 @@ namespace Server
                 var context = scope.ServiceProvider.GetRequiredService<WootComputersSourceContext>();
                 var service = scope.ServiceProvider.GetRequiredService<WootService>();
 
-                var feed = await service.GetComputers();
-                var wootOffers = await service.GetAllPropertiesForFeedItems(feed);
-                var offers = await service.BuildOffers(wootOffers);
-
-                foreach (var offer in offers)
-                {
-                    var temp = context.Offers.FirstOrDefault(o => o.WootId == offer.WootId);
-
-                    if (temp is null)
-                    {
-                        context.Add(offer);
-                    }
-                }
-
-                await context.SaveChangesAsync();
+                IEnumerable<WootFeedItemDto> feed = await service.GetComputers();
+                ICollection<WootOfferDto> wootOffers = await service.GetAllPropertiesForFeedItems(feed);
+                await service.SaveOffersAsync(wootOffers);
+                await service.UpdateSoldOutOffersAsync(feed);
             }
 
             while (!stoppingToken.IsCancellationRequested)
