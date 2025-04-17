@@ -14,6 +14,10 @@ public class WootService
     private readonly ILogger<WootService> _logger;
     private readonly HttpClient _httpClient;
     private readonly WootComputersSourceContext _context;
+    // Acceptable to maintain state because not invoked via HTTP.
+    private readonly List<WootFeedItemDto> _feedItems;
+    private readonly ICollection<WootOfferDto> _wootOffers;
+
 
     // HttpClient configuration in constructor of Typed Client
     // rather than during registration in Program.cs, per:
@@ -32,6 +36,8 @@ public class WootService
         // https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-8.0&tabs=windows
         _httpClient.DefaultRequestHeaders.Add("x-api-key", config["Woot:DeveloperApiKey"]);
         _context = context;
+        _feedItems = [];
+        _wootOffers = new List<WootOfferDto>();
     }
 
     /// <summary>
@@ -43,7 +49,7 @@ public class WootService
     /// The minified Woot! offers, filtered for the "Computers/Desktops"
     /// and "Computers/Laptops" categories.
     /// </returns>
-    public async Task<IEnumerable<WootFeedItemDto>> GetComputers() {
+    public async Task<WootService> GetComputers() {
         // Call the GetNamedFeed endpoint in the Woot! Developer API.
         using HttpResponseMessage response = await _httpClient.GetAsync("feed/Computers");
 
@@ -60,13 +66,13 @@ public class WootService
                     o.Categories.Contains("PC/Desktops") ||
                     o.Categories.Contains("PC/Laptops"));
 
-            return items;
+            _feedItems.AddRange(items);
         }
         catch (JsonException)
         {
             _logger.LogInformation(response.Content.ToString());
-            return new List<WootFeedItemDto>();
         }
+        return this;
     }
 
     /// <summary>
@@ -75,16 +81,13 @@ public class WootService
     /// </summary>
     /// <param name="items">The Woot! API Feed Items (minified offers).</param>
     /// <returns>The corresponding Woot! offers with all their properties.</returns>
-    public async Task<ICollection<WootOfferDto>> GetAllPropertiesForFeedItems(
-        IEnumerable<WootFeedItemDto> items)
+    public async Task<WootService> GetAllPropertiesForFeedItems()
     {
         Dictionary<Guid,string> categoriesById = [];
 
         // Store category, for when after full offers (which exclude category info)
         // are retrieved from the Woot! API.
-        // FIXME: May be better implemented at the point of filtering,
-        // see the GetComputers method.
-        foreach (var item in items)
+        foreach (var item in _feedItems)
         {
             string s = string.Empty;
             if (item.Categories.Contains("PC/Desktops"))
@@ -102,9 +105,9 @@ public class WootService
 
         // Iterate through in increments of 25 feed items per loop,
         // because the Woot! API's GetOffers endpoint enforces a 25-offer maximum.
-        for (int i = 0; i < items.Count(); i += 25)
+        for (int i = 0; i < _feedItems.Count(); i += 25)
         {
-            var increment = items.Skip(i).Take(25);
+            var increment = _feedItems.Skip(i).Take(25);
             // Extract the OfferId of each FeedItem.
             IEnumerable<Guid> ids = increment.Select(items => items.OfferId).ToList();
 
@@ -132,7 +135,9 @@ public class WootService
             offer.Category = category;
         }
 
-        return offers;
+        _wootOffers.AddRange(offers);
+
+        return this;
     }
 
     /// <summary>
@@ -140,12 +145,11 @@ public class WootService
     /// offers in the schema documented at https://developer.woot.com/#tocs_offer,
     /// then persist them to the database.
     /// </summary>
-    /// <param name="wootOffers">Offers in the Woot! schema.</param>
-    public async Task SaveOffersAsync(ICollection<WootOfferDto> wootOffers)
+    public async Task<WootService> SaveOffersAsync()
     {
         ICollection<Offer> offers = new List<Offer>();
 
-        foreach (var wootOffer in wootOffers) {
+        foreach (var wootOffer in _wootOffers) {
             Offer offer = new()
             {
                 WootId = wootOffer.WootId,
@@ -179,6 +183,8 @@ public class WootService
         }
 
         await _context.SaveChangesAsync();
+
+        return this;
     }
 
     /// <summary>
@@ -186,14 +192,13 @@ public class WootService
     /// (A.) not included in the response of live minified offers from Woot! or
     /// (B.) included, but are marked as sold out.
     /// </summary>
-    /// <param name="feed"> Live minified Woot! offers. </param>
     /// <remarks>
     /// Minified offers from the Woot! API's GetNamedFeed endpoint, while live,
     /// are not necessarily still in stock.
     /// </remarks>
-    public async Task UpdateSoldOutOffersAsync(IEnumerable<WootFeedItemDto> feed)
+    public async Task<WootService> UpdateSoldOutOffersAsync()
     {
-        HashSet<Guid> inStockOfferIdSet = new(feed // HashSet for lookup time
+        HashSet<Guid> inStockOfferIdSet = new(_feedItems // HashSet for lookup time
             .Where(o => !o.IsSoldOut) // Not all sold out offers are returned.
             .Select(o => o.OfferId));
         if (inStockOfferIdSet.Count != 0) // Guard against faulty/empty responses.
@@ -209,6 +214,8 @@ public class WootService
         }
 
         await _context.SaveChangesAsync();
+
+        return this;
     }
 
     private List<HardwareConfiguration> GetHardwareConfigurations(WootOfferDto offer)
