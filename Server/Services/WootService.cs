@@ -131,8 +131,8 @@ public class WootService
         // Re-assign category.
         foreach (var offer in offers)
         {
-            categoriesById.TryGetValue(offer.WootId, out string category);
-            offer.Category = category;
+            categoriesById.TryGetValue(offer.WootId, out string? category);
+            offer.Category = (category is null) ? string.Empty : category;
         }
 
         _wootOffers.AddRange(offers);
