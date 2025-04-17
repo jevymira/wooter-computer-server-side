@@ -15,12 +15,12 @@ namespace Server
 
                 // Setup and Intermediate operations.
                 await service
-                    .GetComputers() // .Load()
-                    .GetAllPropertiesForFeedItems(); // optional .Transform()
+                    .WithWootComputersFeedAsync() // .Load()
+                    .BuildWootOffersFromFeedAsync(); // optional .Transform()
 
                 // Terminal operations.
-                await service.SaveOffersAsync(); // requires .Load() and .Transform()
-                await service.UpdateSoldOutOffersAsync(); // requires .Load() only
+                await service.AddNewOffersAsync(); // requires .Load() and .Transform()
+                await service.UpdateSoldOutStatusAsync(); // requires .Load() only
             }
 
             while (!stoppingToken.IsCancellationRequested)

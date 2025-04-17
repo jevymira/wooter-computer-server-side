@@ -15,9 +15,6 @@ public class WootService
     private readonly List<WootFeedItemDto> _feedItems;
     private readonly ICollection<WootOfferDto> _wootOffers;
 
-    // HttpClient configuration in constructor of Typed Client
-    // rather than during registration in Program.cs, per:
-    // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-8.0
     public WootService(
         ILogger<WootService> logger,
         IConfiguration config,
@@ -32,12 +29,12 @@ public class WootService
     }
 
     /// <summary>
-    /// Retrieve live minified Woot! offers in the "Computers/Desktops" 
-    /// and "Computers/Laptops" categories.
+    /// Retrieves and stores live minified Woot! offers under the
+    /// "Computers/Desktops" and "Computers/Laptops" categories.
     /// </summary>
-    public async Task<WootService> GetComputers() {
+    public async Task<WootService> WithWootComputersFeedAsync() {
         // Retrieve the "Computers" feed.
-        List<WootFeedItemDto> feed = await _wootClient.GetComputerFeed();
+        List<WootFeedItemDto> feed = await _wootClient.GetComputerFeedAsync();
 
         // Filter for Desktops and Laptops (and thus exclude e.g., Peripherals, Tablets).
         IEnumerable<WootFeedItemDto> items =
@@ -53,9 +50,10 @@ public class WootService
     }
 
     /// <summary>
-    /// Retrieve the requested offers with all their properties from the Woot! API.
+    /// Retrieves full Woot! offers from the Woot! API 
+    /// based on the set of stored WootFeedItemDto IDs.
     /// </summary>
-    public async Task<WootService> GetAllPropertiesForFeedItems()
+    public async Task<WootService> BuildWootOffersFromFeedAsync()
     {
         Dictionary<Guid,string> categoriesById = [];
 
@@ -78,7 +76,7 @@ public class WootService
         // Extract the Woot! OfferId of each FeedItem.
         List<Guid> ids = _feedItems.Select(items => items.OfferId).ToList();
 
-        _wootOffers.AddRange(await _wootClient.GetWootOffers(ids));
+        _wootOffers.AddRange(await _wootClient.GetWootOffersAsync(ids));
 
         // Re-assign category.
         foreach (var offer in _wootOffers)
@@ -91,14 +89,15 @@ public class WootService
     }
 
     /// <summary>
-    /// Build a collection of Offer objects (and their configurations) from Woot!
-    /// offers in the schema documented at https://developer.woot.com/#tocs_offer,
-    /// then persist them to the database.
+    /// Builds a collection of Offer objects (and their configurations) from the
+    /// set of stored Woot! offers in the schema documented at
+    /// https://developer.woot.com/#tocs_offer.
+    /// Then, tracks them if not already, and persists them to the database.
     /// </summary>
     /// <returns>
     /// No result (as a terminal operation that persists to the database).
     /// </returns>
-    public async Task SaveOffersAsync()
+    public async Task AddNewOffersAsync()
     {
         ICollection<Offer> offers = new List<Offer>();
 
@@ -110,7 +109,7 @@ public class WootService
                 Title = wootOffer.Title,
                 Photo = wootOffer.Photos.First().Url,
                 IsSoldOut = wootOffer.IsSoldOut,
-                Condition = "PLACEHOLDER",
+                Condition = String.Empty,
                 Url = wootOffer.Url,
             };
 
@@ -139,8 +138,8 @@ public class WootService
     }
 
     /// <summary>
-    /// Update property `IsSoldOut` to true for existing offers that are either
-    /// (A.) not included in the response of live minified offers from Woot! or
+    /// Updates property `IsSoldOut` to true for existing offers that are either
+    /// (A.) not included in the stored set of live WootFeedItemDtos from Woot! or
     /// (B.) included, but are marked as sold out.
     /// </summary>
     /// <returns>
@@ -150,7 +149,7 @@ public class WootService
     /// Minified offers from the Woot! API's GetNamedFeed endpoint, while live,
     /// are not necessarily still in stock.
     /// </remarks>
-    public async Task UpdateSoldOutOffersAsync()
+    public async Task UpdateSoldOutStatusAsync()
     {
         HashSet<Guid> inStockOfferIdSet = new(_feedItems // HashSet for lookup time
             .Where(o => !o.IsSoldOut) // Not all sold out offers are returned.

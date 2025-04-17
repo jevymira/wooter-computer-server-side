@@ -21,6 +21,9 @@ public class WootClient
         HttpClient httpClient,
         ILogger<WootClient> logger)
     {
+        // HttpClient configuration in constructor of Typed Client
+        // rather than during registration in Program.cs, per:
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-8.0
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri("https://developer.woot.com/");
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -36,7 +39,7 @@ public class WootClient
     /// <returns>
     /// The live minified Woot! offers under the "Computers" feed.
     /// </returns>
-    public async Task<List<WootFeedItemDto>> GetComputerFeed()
+    public async Task<List<WootFeedItemDto>> GetComputerFeedAsync()
     {
         // Call the GetNamedFeed endpoint in the Woot! Developer API.
         using HttpResponseMessage response = await _httpClient.GetAsync("feed/Computers");
@@ -60,7 +63,7 @@ public class WootClient
     /// </summary>
     /// <param name="ids">The IDs of the offers to retrieve.</param>
     /// <returns>The corresponding Woot! offers with all their properties.</returns>
-    public async Task<List<WootOfferDto>> GetWootOffers(List<Guid> ids)
+    public async Task<List<WootOfferDto>> GetWootOffersAsync(List<Guid> ids)
     {
         List<WootOfferDto> offers = [];
 
