@@ -123,7 +123,7 @@ public class WootService
             {
                 _logger.LogInformation(response.Content.ToString());
             }
-    }
+        }
 
         // Re-assign category.
         foreach (var offer in offers)
