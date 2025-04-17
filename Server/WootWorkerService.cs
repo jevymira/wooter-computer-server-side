@@ -18,10 +18,12 @@ namespace Server
                 var context = scope.ServiceProvider.GetRequiredService<WootComputersSourceContext>();
                 var service = scope.ServiceProvider.GetRequiredService<WootService>();
 
-                await service.GetComputers();
-                await service.GetAllPropertiesForFeedItems();
-                await service.SaveOffersAsync();
-                await service.UpdateSoldOutOffersAsync();
+                await service
+                    .GetComputers() // .Load()
+                    .GetAllPropertiesForFeedItems(); // optional .Transform()
+
+                await service.SaveOffersAsync(); // requires .Load() and .Transform()
+                await service.UpdateSoldOutOffersAsync(); // requires .Load() only
             }
 
             while (!stoppingToken.IsCancellationRequested)
