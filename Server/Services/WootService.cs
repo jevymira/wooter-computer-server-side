@@ -2,9 +2,6 @@
 using Model;
 using NuGet.Packaging;
 using Server.Dtos;
-using System;
-using System.Net.Http.Headers;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Server.Services;
@@ -12,7 +9,7 @@ namespace Server.Services;
 public class WootService
 {
     private readonly ILogger<WootService> _logger;
-    private readonly HttpClient _httpClient;
+    private readonly WootClient _wootClient;
     private readonly WootComputersSourceContext _context;
     // Acceptable to maintain state because not invoked via HTTP.
     private readonly List<WootFeedItemDto> _feedItems;
@@ -24,16 +21,11 @@ public class WootService
     public WootService(
         ILogger<WootService> logger,
         IConfiguration config,
-        HttpClient httpClient,
+        WootClient wootClient,
         WootComputersSourceContext context)
     {
         _logger = logger;
-        _httpClient = httpClient;
-        _httpClient.BaseAddress = new Uri("https://developer.woot.com/");
-        _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        // Secret Manager tool (development), see:
-        // https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-8.0&tabs=windows
-        _httpClient.DefaultRequestHeaders.Add("x-api-key", config["Woot:DeveloperApiKey"]);
+        _wootClient = wootClient;
         _context = context;
         _feedItems = [];
         _wootOffers = new List<WootOfferDto>();
@@ -41,44 +33,28 @@ public class WootService
 
     /// <summary>
     /// Retrieve live minified Woot! offers in the "Computers/Desktops" 
-    /// and "Computers/Laptops" categories from the Woot! API GetNamedFeed endpoint, 
-    /// documented at https://developer.woot.com/#getnamedfeed
-    /// </summary>
-    /// <returns>
-    /// The minified Woot! offers, filtered for the "Computers/Desktops"
     /// and "Computers/Laptops" categories.
-    /// </returns>
+    /// </summary>
     public async Task<WootService> GetComputers() {
-        // Call the GetNamedFeed endpoint in the Woot! Developer API.
-        using HttpResponseMessage response = await _httpClient.GetAsync("feed/Computers");
+        // Retrieve the "Computers" feed.
+        List<WootFeedItemDto> feed = await _wootClient.GetComputerFeed();
 
-        // Deserialize the response body into WootMinifiedDtos.
-        var responseBody = response.Content.ReadAsStream();
+        // Filter for Desktops and Laptops (and thus exclude e.g., Peripherals, Tablets).
+        IEnumerable<WootFeedItemDto> items =
+            (feed.Count == 0)
+            ? new List<WootFeedItemDto>()
+            : feed.Where(i =>
+                i.Categories.Contains("PC/Desktops") ||
+                i.Categories.Contains("PC/Laptops"));
 
-        try
-        {
-            WootNamedFeedDto? feed = JsonSerializer.Deserialize<WootNamedFeedDto>(responseBody);
+        _feedItems.AddRange(items);
 
-            // Filter for Desktops and Laptops (and thus exclude e.g., Peripherals, Tablets).
-            IEnumerable<WootFeedItemDto> items = feed is null ? new List<WootFeedItemDto>() :
-                feed.Items.Where(o =>
-                    o.Categories.Contains("PC/Desktops") ||
-                    o.Categories.Contains("PC/Laptops"));
-
-            _feedItems.AddRange(items);
-        }
-        catch (JsonException)
-        {
-            _logger.LogInformation(response.Content.ToString());
-        }
         return this;
     }
 
     /// <summary>
-    /// Retrieve the requested offers with all their properties from the Woot! API
-    /// GetOffers endpoint, documented at https://developer.woot.com/#getoffers
+    /// Retrieve the requested offers with all their properties from the Woot! API.
     /// </summary>
-    /// <returns>The corresponding Woot! offers with all their properties.</returns>
     public async Task<WootService> GetAllPropertiesForFeedItems()
     {
         Dictionary<Guid,string> categoriesById = [];
@@ -99,41 +75,17 @@ public class WootService
             categoriesById.Add(item.OfferId, s);
         }
 
-        ICollection<WootOfferDto> offers = new List<WootOfferDto>();
+        // Extract the Woot! OfferId of each FeedItem.
+        List<Guid> ids = _feedItems.Select(items => items.OfferId).ToList();
 
-        // Iterate through in increments of 25 feed items per loop,
-        // because the Woot! API's GetOffers endpoint enforces a 25-offer maximum.
-        for (int i = 0; i < _feedItems.Count(); i += 25)
-        {
-            var increment = _feedItems.Skip(i).Take(25);
-            // Extract the OfferId of each FeedItem.
-            IEnumerable<Guid> ids = increment.Select(items => items.OfferId).ToList();
-
-            // Assemble the body parameter for the request to the GetOffers Woot! API endpoint.
-            HttpContent content = new StringContent(JsonSerializer.Serialize(ids));
-
-            using HttpResponseMessage response = await _httpClient.PostAsync("getoffers", content);
-
-            // Deserialize the response body into WootOfferDtos.
-            var responseBody = response.Content.ReadAsStream();
-
-            try {
-                offers.AddRange(JsonSerializer.Deserialize<ICollection<WootOfferDto>>(responseBody));
-            }
-            catch (JsonException)
-            {
-                _logger.LogInformation(response.Content.ToString());
-            }
-        }
+        _wootOffers.AddRange(await _wootClient.GetWootOffers(ids));
 
         // Re-assign category.
-        foreach (var offer in offers)
+        foreach (var offer in _wootOffers)
         {
             categoriesById.TryGetValue(offer.WootId, out string? category);
             offer.Category = (category is null) ? string.Empty : category;
         }
-
-        _wootOffers.AddRange(offers);
 
         return this;
     }

@@ -2,6 +2,6 @@
 {
     public class WootNamedFeedDto
     {
-        public ICollection<WootFeedItemDto> Items { get; set; } = null!;
+        public List<WootFeedItemDto> Items { get; set; } = null!;
     }
 }
