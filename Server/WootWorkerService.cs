@@ -7,17 +7,18 @@ namespace Server
         ILogger<WootWorkerService> logger
     ) : BackgroundService
     {
-
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             using (var scope = scopeFactory.CreateScope())
             {
                 var service = scope.ServiceProvider.GetRequiredService<WootService>();
 
+                // Setup and Intermediate operations.
                 await service
                     .GetComputers() // .Load()
                     .GetAllPropertiesForFeedItems(); // optional .Transform()
 
+                // Terminal operations.
                 await service.SaveOffersAsync(); // requires .Load() and .Transform()
                 await service.UpdateSoldOutOffersAsync(); // requires .Load() only
             }

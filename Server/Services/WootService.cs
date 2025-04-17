@@ -18,7 +18,6 @@ public class WootService
     private readonly List<WootFeedItemDto> _feedItems;
     private readonly ICollection<WootOfferDto> _wootOffers;
 
-
     // HttpClient configuration in constructor of Typed Client
     // rather than during registration in Program.cs, per:
     // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-8.0
@@ -79,7 +78,6 @@ public class WootService
     /// Retrieve the requested offers with all their properties from the Woot! API
     /// GetOffers endpoint, documented at https://developer.woot.com/#getoffers
     /// </summary>
-    /// <param name="items">The Woot! API Feed Items (minified offers).</param>
     /// <returns>The corresponding Woot! offers with all their properties.</returns>
     public async Task<WootService> GetAllPropertiesForFeedItems()
     {
