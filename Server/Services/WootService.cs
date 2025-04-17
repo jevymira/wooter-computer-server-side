@@ -145,7 +145,10 @@ public class WootService
     /// offers in the schema documented at https://developer.woot.com/#tocs_offer,
     /// then persist them to the database.
     /// </summary>
-    public async Task<WootService> SaveOffersAsync()
+    /// <returns>
+    /// No result (as a terminal operation that persists to the database).
+    /// </returns>
+    public async Task SaveOffersAsync()
     {
         ICollection<Offer> offers = new List<Offer>();
 
@@ -183,8 +186,6 @@ public class WootService
         }
 
         await _context.SaveChangesAsync();
-
-        return this;
     }
 
     /// <summary>
@@ -192,11 +193,14 @@ public class WootService
     /// (A.) not included in the response of live minified offers from Woot! or
     /// (B.) included, but are marked as sold out.
     /// </summary>
+    /// <returns>
+    /// No result (as a terminal operation that persists to the database).
+    /// </returns>
     /// <remarks>
     /// Minified offers from the Woot! API's GetNamedFeed endpoint, while live,
     /// are not necessarily still in stock.
     /// </remarks>
-    public async Task<WootService> UpdateSoldOutOffersAsync()
+    public async Task UpdateSoldOutOffersAsync()
     {
         HashSet<Guid> inStockOfferIdSet = new(_feedItems // HashSet for lookup time
             .Where(o => !o.IsSoldOut) // Not all sold out offers are returned.
@@ -214,8 +218,6 @@ public class WootService
         }
 
         await _context.SaveChangesAsync();
-
-        return this;
     }
 
     private List<HardwareConfiguration> GetHardwareConfigurations(WootOfferDto offer)
