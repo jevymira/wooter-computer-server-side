@@ -16,7 +16,7 @@ namespace Server.Controllers
 
         // GET: api/Offers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OfferItemDto>>> GetOffers(
+        public async Task<ActionResult<ICollection<OfferItemDto>>> GetOffers(
             [FromQuery] string? category,
             [FromQuery] List<short> memory,
             [FromQuery] List<short> storage)
