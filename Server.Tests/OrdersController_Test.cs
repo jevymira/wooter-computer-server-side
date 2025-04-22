@@ -93,5 +93,33 @@ namespace Server.Tests
             Assert.Equal(1, result.Count);
             Assert.All(result, o => Assert.Equal("Desktops", o.Category));
         }
+
+        [Fact]
+        public async Task GetOffersByMemoryCapacityAsync()
+        {
+            // Arrange
+            var controller = new OffersController(_fixture.Context);
+
+            // Act
+            var result = (await controller.GetOffers(null, [16], [])).Value;
+
+            // Assert
+            Assert.Equal(1, result.Count);
+            Assert.All(result, o => Assert.Equal(16, o.MemoryCapacity));
+        }
+
+        [Fact]
+        public async Task GetOffersByStorageStorageAsync()
+        {
+            // Arrange
+            var controller = new OffersController(_fixture.Context);
+
+            // Act
+            var result = (await controller.GetOffers(null, [], [32])).Value;
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.All(result, o => Assert.Equal(256, o.StorageSize));
+        }
     }
 }
