@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Model;
 using Server.Controllers;
 using Server.Dtos;
 using System.Configuration;
+using static System.Net.WebRequestMethods;
 
 namespace Server.Tests
 {
@@ -16,7 +18,7 @@ namespace Server.Tests
         {
             // Arrange  
             var options = new DbContextOptionsBuilder<WootComputersSourceContext>()
-                .UseInMemoryDatabase(databaseName: "WootComputers")
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
             using var context = new WootComputersSourceContext(options);
 
@@ -51,6 +53,56 @@ namespace Server.Tests
             // Assert
             Assert.NotNull(offer_existing);
             Assert.Null(offer_notExisting);
+        }
+
+        [Fact]
+        public async Task GetOffersByCategoryAsync()
+        {
+            // Arrange
+            var options = new DbContextOptionsBuilder<WootComputersSourceContext>()
+                .EnableSensitiveDataLogging()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            using var context = new WootComputersSourceContext(options);
+
+            context.Add(new Offer()
+            {
+                WootId = Guid.NewGuid(),
+                Category = "Desktops",
+                Title = "Dell Optiplex 7070",
+                Photo = "https://d3gqasl9vmjfd8.cloudfront.net/8697eca7-d3bc-451b-9111-9086936d8ecf.png",
+                IsSoldOut = false,
+                Condition = "Refurbished",
+                Url = "https://computers.woot.com/offers/dell-optiplex-7070-micro-desktop-mini-pc-5",
+                Configurations = new[] { new HardwareConfiguration() 
+                    { MemoryCapacity = 16, StorageSize = 256 } 
+                }
+            });
+
+            context.Add(new Offer()
+            {
+                WootId = Guid.NewGuid(),
+                Category = "Laptops",
+                Title = "Dell Latitude 7420",
+                Photo = "https://d3gqasl9vmjfd8.cloudfront.net/7819b57e-e82e-4656-a7e7-916f9606c0c7.jpg",
+                IsSoldOut = false,
+                Condition = "Refurbished",
+                Url = "https://computers.woot.com/offers/dell-latitude-7420-business-14-laptop-6",
+                Configurations = new[] { new HardwareConfiguration()
+                    { MemoryCapacity = 32, StorageSize = 256}
+                }
+            });
+
+            context.SaveChanges();
+
+            var controller = new OffersController(context);
+
+            // Act
+            var result = (await controller.GetOffers("Desktops", [], [])).Value;
+
+            // Assert
+            Assert.Equal(1, result.Count);
+            Assert.All(result, o => Assert.Equal("Desktops", o.Category));
         }
     }
 }
