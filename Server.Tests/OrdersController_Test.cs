@@ -1,10 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Model;
 using Server.Controllers;
 using Server.Dtos;
-using System.Configuration;
-using static System.Net.WebRequestMethods;
 
 namespace Server.Tests
 {
@@ -14,20 +11,13 @@ namespace Server.Tests
         /// Test the GetOffer() method.
         /// </summary>
         [Fact]
-        public async Task GetOffer()
+        public async Task GetOfferAsync()
         {
             // Arrange  
             var options = new DbContextOptionsBuilder<WootComputersSourceContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
             using var context = new WootComputersSourceContext(options);
-
-            var configuration = new HardwareConfiguration()
-            {
-                Id = 1,
-                MemoryCapacity = 16,
-                StorageSize = 256
-            };
 
             context.Add(new Offer()
             {
@@ -38,7 +28,9 @@ namespace Server.Tests
                 IsSoldOut = false,
                 Condition = "Refurbished",
                 Url = "https://computers.woot.com/offers/dell-optiplex-7070-micro-desktop-mini-pc-5",
-                Configurations = new[] { configuration }
+                Configurations = new[] { new HardwareConfiguration()
+                    { MemoryCapacity = 16, StorageSize = 256}
+                }
             });
             context.SaveChanges();
 
