@@ -121,5 +121,23 @@ namespace Server.Tests
             Assert.Equal(2, result.Count);
             Assert.All(result, o => Assert.Equal(256, o.StorageSize));
         }
+
+        /// <summary>
+        /// Tests method GetOffers() with all filters active.
+        /// </summary>
+        [Fact]
+        public async Task GetDesktopsWith16GbMemoryAnd256GbStorage()
+        {
+            // Arrange
+            var controller = new OffersController(_fixture.Context);
+
+            // Act
+            var result = (await controller.GetOffers("Desktops", [16], [256])).Value;
+
+            // Assert
+            Assert.All(result, o => Assert.Equal("Desktops", o.Category));
+            Assert.All(result, o => Assert.Equal(16, o.MemoryCapacity));
+            Assert.All(result, o => Assert.Equal(256, o.StorageSize));
+        }
     }
 }
