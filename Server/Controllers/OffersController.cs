@@ -16,41 +16,47 @@ namespace Server.Controllers
 
         // GET: api/Offers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OfferItemDto>>> GetOffers(
+        public async Task<ActionResult<ICollection<OfferItemDto>>> GetOffers(
             [FromQuery] string? category,
             [FromQuery] List<short> memory,
             [FromQuery] List<short> storage)
         {
-            var offers = await _context.Offers
-                .Where(o => (category.IsNullOrEmpty() || o.Category.Equals(category))
-                    && !o.IsSoldOut)
-                .Include(c => c.Configurations
-                    .Where(c => memory.IsNullOrEmpty() // empty query param
-                        || (c.MemoryCapacity != 0 // filter out the few malformed configs
-                            && memory.Contains(c.MemoryCapacity)))
-                    .Where(c=> storage.IsNullOrEmpty() // AND across filter types
-                        || (c.StorageSize != 0
-                            && storage.Contains(c.StorageSize)))) // OR within filter types
+            var categoryFilteredOffers = await _context.Offers
+                .Where(o => !o.IsSoldOut)
+                .Where(o => category.IsNullOrEmpty() || o.Category.Equals(category))
+                .Include(o => o.Configurations)
                 .ToListAsync();
-            
-            List<OfferItemDto> items = [];
 
-            foreach (var offer in offers)
+            var memoryStorageFilteredOffers = categoryFilteredOffers
+                .Where(o => o.Configurations
+                    // AND across filter types; OR within filter types.
+                    .Any(c => (memory.IsNullOrEmpty() || memory.Contains(c.MemoryCapacity))
+                        && (storage.IsNullOrEmpty() || storage.Contains(c.StorageSize))
+                        && (c.MemoryCapacity != 0 && c.StorageSize != 0))) // Malformed offers.
+                .ToList();
+
+            List <OfferItemDto> items = [];
+
+            foreach (var offer in memoryStorageFilteredOffers)
             {
                 foreach (var config in offer.Configurations)
                 {
-                    items.Add(new OfferItemDto()
+                    if ((memory.IsNullOrEmpty() || memory.Contains(config.MemoryCapacity))
+                        && (storage.IsNullOrEmpty() || storage.Contains(config.StorageSize)))
                     {
-                        Id = config.Id,
-                        Category = offer.Category,
-                        Title = offer.Title,
-                        Photo = offer.Photo,
-                        MemoryCapacity = config.MemoryCapacity,
-                        StorageSize = config.StorageSize,
-                        Price = config.Price,
-                        IsSoldOut = offer.IsSoldOut,
-                        Url = offer.Url,
-                    });
+                        items.Add(new OfferItemDto()
+                        {
+                            Id = config.Id,
+                            Category = offer.Category,
+                            Title = offer.Title,
+                            Photo = offer.Photo,
+                            MemoryCapacity = config.MemoryCapacity,
+                            StorageSize = config.StorageSize,
+                            Price = config.Price,
+                            IsSoldOut = offer.IsSoldOut,
+                            Url = offer.Url,
+                        });
+                    }
                 }
             }
 
