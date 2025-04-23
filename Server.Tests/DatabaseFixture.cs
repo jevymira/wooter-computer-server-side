@@ -18,13 +18,30 @@ public class DatabaseFixture : IDisposable
             .Options;
         var context = new WootComputersSourceContext(options);
 
+        // In-stock, multi-configuration Desktop.
+        context.Add(new Offer()
+        {
+            WootId = Guid.NewGuid(),
+            Category = "Desktops",
+            Title = "Dell Optiplex 7080",
+            Photo = "https://d3gqasl9vmjfd8.cloudfront.net/87ecd638-d90c-4006-ba40-87d01d6dd963.jpg",
+            IsSoldOut = false,
+            Condition = "Refurbished",
+            Url = "https://computers.woot.com/offers/dell-optiplex-7080-micro-4?ref=w_cnt_lnd_cat_pc_5_72",
+            Configurations = new[] {
+                new HardwareConfiguration() { MemoryCapacity = 16, StorageSize = 256 },
+                new HardwareConfiguration() { MemoryCapacity = 16, StorageSize = 512 },
+                new HardwareConfiguration() { MemoryCapacity = 32, StorageSize = 1000 }
+            }
+        });
+
         context.Add(new Offer()
         {
             WootId = Guid.NewGuid(),
             Category = "Desktops",
             Title = "Dell Optiplex 7070",
             Photo = "https://d3gqasl9vmjfd8.cloudfront.net/8697eca7-d3bc-451b-9111-9086936d8ecf.png",
-            IsSoldOut = false,
+            IsSoldOut = true,
             Condition = "Refurbished",
             Url = "https://computers.woot.com/offers/dell-optiplex-7070-micro-desktop-mini-pc-5",
             Configurations = new[] { new HardwareConfiguration()
