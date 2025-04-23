@@ -41,18 +41,22 @@ namespace Server.Controllers
             {
                 foreach (var config in offer.Configurations)
                 {
-                    items.Add(new OfferItemDto()
+                    if ((memory.IsNullOrEmpty() || memory.Contains(config.MemoryCapacity))
+                        && (storage.IsNullOrEmpty() || storage.Contains(config.StorageSize)))
                     {
-                        Id = config.Id,
-                        Category = offer.Category,
-                        Title = offer.Title,
-                        Photo = offer.Photo,
-                        MemoryCapacity = config.MemoryCapacity,
-                        StorageSize = config.StorageSize,
-                        Price = config.Price,
-                        IsSoldOut = offer.IsSoldOut,
-                        Url = offer.Url,
-                    });
+                        items.Add(new OfferItemDto()
+                        {
+                            Id = config.Id,
+                            Category = offer.Category,
+                            Title = offer.Title,
+                            Photo = offer.Photo,
+                            MemoryCapacity = config.MemoryCapacity,
+                            StorageSize = config.StorageSize,
+                            Price = config.Price,
+                            IsSoldOut = offer.IsSoldOut,
+                            Url = offer.Url,
+                        });
+                    }
                 }
             }
 
