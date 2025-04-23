@@ -18,7 +18,7 @@ public class DatabaseFixture : IDisposable
             .Options;
         var context = new WootComputersSourceContext(options);
 
-        // In-stock, multi-configuration Desktop.
+        // In-stock, multi-configuration desktop.
         context.Add(new Offer()
         {
             WootId = Guid.NewGuid(),
@@ -35,6 +35,7 @@ public class DatabaseFixture : IDisposable
             }
         });
 
+        // Sold-out, single-configuration desktop.
         context.Add(new Offer()
         {
             WootId = Guid.NewGuid(),
@@ -49,6 +50,7 @@ public class DatabaseFixture : IDisposable
                 }
         });
 
+        // In-stock, single-configuration laptop.
         context.Add(new Offer()
         {
             WootId = Guid.NewGuid(),

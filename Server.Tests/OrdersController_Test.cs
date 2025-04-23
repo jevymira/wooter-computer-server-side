@@ -32,6 +32,9 @@ namespace Server.Tests
             Assert.Null(offer_notExisting);
         }
 
+        /// <summary>
+        /// Tests the GetOffers() method, which filters out offers flagged isSoldOut.
+        /// </summary>
         [Fact]
         public async Task GetAllOffersAsync()
         {
@@ -47,6 +50,10 @@ namespace Server.Tests
             Assert.Equal(expected, result.Count);
         }
 
+        /// <summary>
+        /// Tests the GetOffers() method, set to filter for category "Desktops."
+        /// Applies no filters for "memory" or "storage."
+        /// </summary>
         [Fact]
         public async Task GetOffersByCategoryAsync()
         {
@@ -61,6 +68,10 @@ namespace Server.Tests
             Assert.All(result, o => Assert.Equal("Desktops", o.Category));
         }
 
+        /// <summary>
+        /// Tests the GetOffers() method, set to filter for a single select memory capacity.
+        /// Applies no filters for "category" or "storage."
+        /// </summary>
         [Fact]
         public async Task GetOffersByMemoryCapacityAsync()
         {
@@ -75,6 +86,10 @@ namespace Server.Tests
             Assert.All(result, o => Assert.Equal(16, o.MemoryCapacity));
         }
 
+        /// <summary>
+        /// Tests the GetOffers() method, set to filter for a single select storage size.
+        /// Applies no filters for "category" or "memory."
+        /// </summary>
         [Fact]
         public async Task GetOffersByStorageStorageAsync()
         {
@@ -91,6 +106,7 @@ namespace Server.Tests
 
         /// <summary>
         /// Tests method GetOffers() with all filters active.
+        /// Filters "memory" and "storage" with single values.
         /// </summary>
         [Fact]
         public async Task GetDesktopsWith16GbMemoryAnd256GbStorage()
