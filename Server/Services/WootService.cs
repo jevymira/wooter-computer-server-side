@@ -2,26 +2,23 @@
 using Model;
 using NuGet.Packaging;
 using Server.Dtos;
+using Server.Services.Interfaces;
 using System.Text.RegularExpressions;
 
 namespace Server.Services;
 
 public class WootService
 {
-    private readonly ILogger<WootService> _logger;
-    private readonly WootClient _wootClient;
+    private readonly IWootClient _wootClient;
     private readonly WootComputersSourceContext _context;
     // Acceptable to maintain state because not invoked via HTTP.
     private readonly List<WootFeedItemDto> _feedItems;
     private readonly ICollection<WootOfferDto> _wootOffers;
 
     public WootService(
-        ILogger<WootService> logger,
-        IConfiguration config,
-        WootClient wootClient,
+        IWootClient wootClient,
         WootComputersSourceContext context)
     {
-        _logger = logger;
         _wootClient = wootClient;
         _context = context;
         _feedItems = [];
