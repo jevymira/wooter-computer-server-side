@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Model;
 using Server.Controllers;
 using Server.Dtos;
@@ -102,6 +103,27 @@ namespace Server.Tests
             // Assert
             Assert.Equal(2, result.Count);
             Assert.All(result, o => Assert.Equal(256, o.StorageSize));
+        }
+
+        /// <summary>
+        /// Tests method GetOffers() with a single filter value applied for "memory"
+        /// and several filter values for "storage".
+        /// </summary>
+        [Fact]
+        public async Task GetOffersWith16GbMemoryAndAnyAmongStorageSelection()
+        {
+            // Arrange
+            var controller = new OffersController(_fixture.Context);
+            var storage = new List<short>() { 256, 512 };
+
+            // Act
+            var result = (await controller.GetOffers(null, [16], storage)).Value;
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.All(result, o => Assert.Equal("Desktops", o.Category));
+            Assert.All(result, o => Assert.Equal(16, o.MemoryCapacity));
+            Assert.All(result, o => Assert.Contains(o.StorageSize, storage));
         }
 
         /// <summary>
