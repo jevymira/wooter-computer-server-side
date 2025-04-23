@@ -21,21 +21,23 @@ namespace Server.Controllers
             [FromQuery] List<short> memory,
             [FromQuery] List<short> storage)
         {
-            var offers = await _context.Offers
-                .Where(o => (category.IsNullOrEmpty() || o.Category.Equals(category))
-                    && !o.IsSoldOut)
-                .Include(c => c.Configurations
-                    .Where(c => memory.IsNullOrEmpty() // empty query param
-                        || (c.MemoryCapacity != 0 // filter out the few malformed configs
-                            && memory.Contains(c.MemoryCapacity)))
-                    .Where(c=> storage.IsNullOrEmpty() // AND across filter types
-                        || (c.StorageSize != 0
-                            && storage.Contains(c.StorageSize)))) // OR within filter types
+            var categoryFilteredOffers = await _context.Offers
+                .Where(o => !o.IsSoldOut)
+                .Where(o => category.IsNullOrEmpty() || o.Category.Equals(category))
+                .Include(o => o.Configurations)
                 .ToListAsync();
-            
-            List<OfferItemDto> items = [];
 
-            foreach (var offer in offers)
+            var memoryStorageFilteredOffers = categoryFilteredOffers
+                .Where(o => o.Configurations
+                    // AND across filter types; OR within filter types.
+                    .Any(c => (memory.IsNullOrEmpty() || memory.Contains(c.MemoryCapacity))
+                        && (storage.IsNullOrEmpty() || storage.Contains(c.StorageSize))
+                        && (c.MemoryCapacity != 0 && c.StorageSize != 0))) // Malformed offers.
+                .ToList();
+
+            List <OfferItemDto> items = [];
+
+            foreach (var offer in memoryStorageFilteredOffers)
             {
                 foreach (var config in offer.Configurations)
                 {

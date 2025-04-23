@@ -115,7 +115,7 @@ namespace Server.Tests
             var controller = new OffersController(_fixture.Context);
 
             // Act
-            var result = (await controller.GetOffers(null, [], [32])).Value;
+            var result = (await controller.GetOffers(null, [], [256])).Value;
 
             // Assert
             Assert.Equal(2, result.Count);
