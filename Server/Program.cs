@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Model;
 using Server;
 using Server.Services;
+using Server.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,7 +46,7 @@ builder.Services.AddAuthentication(options =>
 // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
 builder.Services.AddHttpClient<WootService>();
 builder.Services.AddScoped<WootService>();
-builder.Services.AddScoped<WootClient>();
+builder.Services.AddScoped<IWootClient, WootClient>();
 builder.Services.AddHostedService<WootWorkerService>();
 
 // Logging WootWorkerService.

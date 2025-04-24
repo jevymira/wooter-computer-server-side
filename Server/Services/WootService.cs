@@ -1,27 +1,25 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Model;
 using NuGet.Packaging;
 using Server.Dtos;
+using Server.Services.Interfaces;
 using System.Text.RegularExpressions;
 
 namespace Server.Services;
 
 public class WootService
 {
-    private readonly ILogger<WootService> _logger;
-    private readonly WootClient _wootClient;
+    private readonly IWootClient _wootClient;
     private readonly WootComputersSourceContext _context;
     // Acceptable to maintain state because not invoked via HTTP.
     private readonly List<WootFeedItemDto> _feedItems;
     private readonly ICollection<WootOfferDto> _wootOffers;
 
     public WootService(
-        ILogger<WootService> logger,
-        IConfiguration config,
-        WootClient wootClient,
+        IWootClient wootClient,
         WootComputersSourceContext context)
     {
-        _logger = logger;
         _wootClient = wootClient;
         _context = context;
         _feedItems = [];
@@ -75,8 +73,13 @@ public class WootService
 
         // Extract the Woot! OfferId of each FeedItem.
         List<Guid> ids = _feedItems.Select(items => items.OfferId).ToList();
+        // Fetch the Woot! offers corresponding to the OfferIds.
+        List<WootOfferDto> offers = await _wootClient.GetWootOffersAsync(ids);
 
-        _wootOffers.AddRange(await _wootClient.GetWootOffersAsync(ids));
+        if (!offers.IsNullOrEmpty()) // Prevent AddRange() null parameter exception.
+        {
+            _wootOffers.AddRange(offers);
+        }
 
         // Re-assign category.
         foreach (var offer in _wootOffers)
@@ -99,10 +102,27 @@ public class WootService
     /// </returns>
     public async Task AddNewOffersAsync()
     {
-        ICollection<Offer> offers = new List<Offer>();
+        List<Offer> offers = [];
+
+        /*
+        List<Offer> offers = _wootOffers
+            .Select(o => new Offer() 
+        {
+            WootId = o.WootId,
+            Category = o.Category,
+            Title = o.Title,
+            Photo = o.Photos.First().Url,
+            IsSoldOut = o.IsSoldOut,
+            Condition = String.Empty,
+            Url = o.Url,
+            Configurations = (o.FullTitle != null) // Guard against malformed offers.
+                ? GetHardwareConfigurations(o)
+                : []
+        }).ToList();
+        */
 
         foreach (var wootOffer in _wootOffers) {
-            Offer offer = new()
+            var offer = new Offer()
             {
                 WootId = wootOffer.WootId,
                 Category = wootOffer.Category,
@@ -111,6 +131,7 @@ public class WootService
                 IsSoldOut = wootOffer.IsSoldOut,
                 Condition = String.Empty,
                 Url = wootOffer.Url,
+                Configurations = []
             };
 
             // Guard condition against malformed Woot! offers.
@@ -154,7 +175,7 @@ public class WootService
         HashSet<Guid> inStockOfferIdSet = new(_feedItems // HashSet for lookup time
             .Where(o => !o.IsSoldOut) // Not all sold out offers are returned.
             .Select(o => o.OfferId));
-        if (inStockOfferIdSet.Count != 0) // Guard against faulty/empty responses.
+        if (!_feedItems.IsNullOrEmpty()) // Guard against faulty/empty responses.
         {
             // Compare tracked offers against the IDs of offers still in stock.
             var endedOffers = _context.Offers

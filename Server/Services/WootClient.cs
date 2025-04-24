@@ -1,4 +1,5 @@
 ﻿using Server.Dtos;
+using Server.Services.Interfaces;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -11,7 +12,7 @@ namespace Server.Services;
 /// <remarks>
 /// Hence the "Client" naming scheme, aligned with HttpClient.
 /// </remarks>
-public class WootClient
+public class WootClient : IWootClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<WootClient> _logger;
