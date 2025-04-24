@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Model;
 using NuGet.Packaging;
 using Server.Dtos;
@@ -151,7 +152,7 @@ public class WootService
         HashSet<Guid> inStockOfferIdSet = new(_feedItems // HashSet for lookup time
             .Where(o => !o.IsSoldOut) // Not all sold out offers are returned.
             .Select(o => o.OfferId));
-        if (inStockOfferIdSet.Count != 0) // Guard against faulty/empty responses.
+        if (!_feedItems.IsNullOrEmpty()) // Guard against faulty/empty responses.
         {
             // Compare tracked offers against the IDs of offers still in stock.
             var endedOffers = _context.Offers
