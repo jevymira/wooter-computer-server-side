@@ -27,7 +27,7 @@ public class WootService_Test : IDisposable
 
         _context = new WootComputersSourceContext(options);
 
-        _wootOfferId = Guid.NewGuid();
+        _wootOfferId = Guid.Parse("12345678-1234-1234-1234-123456789abc");
 
         _context.Add(new Offer()
         {
@@ -152,5 +152,231 @@ public class WootService_Test : IDisposable
         // because it was included in the collection of live (but sold out) offers.
         // The other is now "sold-out", being not included in the live feed at all.
         Assert.Equal(0, _context.Offers.Where(o => o.IsSoldOut == false).Count());
+    }
+
+    /// <summary>
+    /// Tests AddNewOffersAsync() for the case in which no offers are returned
+    /// from the Woot! API.
+    /// </summary>
+    [Fact]
+    public async Task AddNewOffersWithoutAnyOffers()
+    {
+        // Arrange
+        var client = Substitute.For<IWootClient>();
+        // Mock an (erroneous) empty return.
+        client.GetComputerFeedAsync().Returns([]);
+        // From the previous empty return, mock an empty parameter.
+        client.GetWootOffersAsync([]).Returns([]);
+
+        var service = new WootService(client, _context);
+
+        // Act
+        await service
+            .WithWootComputersFeedAsync()   // Uses mocked GetComputerFeedAsync().
+            .BuildWootOffersFromFeedAsync() // Uses mocked GetWootOffersAsync().
+            .AddNewOffersAsync();           // Uses mocked DbContext.
+
+        // Assert
+        Assert.Equal(2, _context.Offers.Count());
+    }
+
+    public static IEnumerable<object[]> ExistingOfferData => new List<object[]> 
+    {
+        new object[]
+        {
+            new WootOfferDto()
+            {
+                WootId = Guid.Parse("12345678-1234-1234-1234-123456789abc"),
+                Category = "Desktops",
+                Title = "Dell Optiplex 7080",
+                Photos = [new WootOfferPhotoDto() { Url = "placeholder" }],
+                IsSoldOut = false,
+                Condition = "Refurbished",
+                Url = "placeholder",
+                FullTitle = "placeholder"
+            }
+        }
+    };
+
+    /// <summary>
+    /// Tests AddNewOffersAsync() for the case in which only already-tracked
+    /// offers are returned from the Woot! API.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(ExistingOfferData))]
+    public async Task AddNewOffersButAlreadyTracked(WootOfferDto wootOffer)        
+    {
+        // Arrange
+        var wootFeedItem = new WootFeedItemDto
+        {
+            // Matches a tracked offer.
+            OfferId = wootOffer.WootId,
+            Categories = ["PC/Desktops"],
+            IsSoldOut = false
+        };
+
+        var client = Substitute.For<IWootClient>();
+        client.GetComputerFeedAsync().Returns([wootFeedItem]);
+        client.GetWootOffersAsync([wootFeedItem.OfferId]).Returns([wootOffer]);
+
+        var service = new WootService(client, _context);
+
+        // Act
+        await service
+            .WithWootComputersFeedAsync()   // Uses mocked GetComputerFeedAsync().
+            .BuildWootOffersFromFeedAsync() // Uses mocked GetWootOffersAsync().
+            .AddNewOffersAsync();           // Uses mocked DbContext.
+
+        // Assert
+        Assert.Equal(2, _context.Offers.Count());
+    }
+
+    public static IEnumerable<object[]> NewOfferData => new List<object[]>
+    {
+        new object[]
+        {
+            // Multi-configuration offer, specs a findable as the "Value" to a 
+            // generalized "Key."
+            new WootOfferDto()
+            {
+                WootId = Guid.NewGuid(),
+                Category = "Desktops",
+                Title = "Dell Precision 3440 SFF",
+                Photos = [new WootOfferPhotoDto() { Url = "placeholder" }],
+                IsSoldOut = false,
+                Condition = "Refurbished",
+                Url = "placeholder",
+                FullTitle = "placeholder",
+                Items = [
+                    new WootOfferItemDto()
+                    {
+                        Attributes = [new WootOfferItemAttributeDto()
+                        {
+                            Key = "Model",
+                            Value = "i7-9700 | 16GB | 256GB"
+                        }],
+                        Id = Guid.NewGuid(),
+                        SalePrice = 299.99m
+                    },
+                    new WootOfferItemDto()
+                    {
+                        Attributes = [new WootOfferItemAttributeDto()
+                        {
+                            Key = "Model",
+                            Value = "i7-9700 | 32GB | 512GB"
+                        }],
+                        Id = Guid.NewGuid(),
+                        SalePrice = 349.99m
+                    }
+                ]
+            }
+        },
+        new object[]
+        {   // Multi-configuration offer: memory findable as "Value" to "Key,"
+            // and storage findable in FullTitle.
+            new WootOfferDto()
+            {
+                WootId = Guid.Parse("70807f86-b57e-4f69-8048-94425f3ee71e"),
+                Category = "Desktops",
+                Title = "Dell Optiplex 7080",
+                Photos = [new WootOfferPhotoDto() { Url = "placeholder" }],
+                IsSoldOut = false,
+                Condition = "Refurbished",
+                Url = "placeholder",
+                FullTitle = "Dell OptiPlex 7080 Micro Form Factor Desktop PC, " +
+                "Windows 11 Pro, Intel Core i5-10600T 6-Core 2.40GHz, " +
+                "256GB SSD, (Your Choice of Memory)",
+                Items = [
+                    new WootOfferItemDto()
+                    {
+                        Attributes = [new WootOfferItemAttributeDto()
+                        {
+                            Key = "Model",
+                            Value = "16GB"
+                        }],
+                        Id = Guid.NewGuid(),
+                        SalePrice = 519.99m
+                    },
+                    new WootOfferItemDto()
+                    {
+                        Attributes = [new WootOfferItemAttributeDto()
+                        {
+                            Key = "Model",
+                            Value = "32GB"
+                        }],
+                        Id = Guid.NewGuid(),
+                        SalePrice = 559.99m
+                    }
+                ]
+            }
+        },
+        new object[]
+        {   // Single-configuration offer, specs only extractable from FullTitle.
+            new WootOfferDto()
+            {
+                WootId = Guid.Parse("70807f86-b57e-4f69-8048-94425f3ee71e"),
+                Category = "Desktops",
+                Title = "Dell Optiplex 7080 Open Box",
+                Photos = [new WootOfferPhotoDto() { Url = "placeholder" }],
+                IsSoldOut = false,
+                Condition = "Refurbished",
+                Url = "placeholder",
+                FullTitle = "Dell OptiPlex 7080 Micro Form Factor Desktop PC, " +
+                "Windows 11 Pro, Intel Core i5-10600T 6-Core 2.40GHz, " +
+                "32GB (2x16GB) DDR4-2666MHz Memory, Intel UHD Graphics 630, " +
+                "256GB SSD, Dell OP7080532256MAR, Refurbished",
+                Items = [
+                    new WootOfferItemDto()
+                    {
+                        Attributes = [new WootOfferItemAttributeDto()
+                        {
+                            Key = "Model",
+                            Value = "Dell OP7080532256MAR"
+                        }],
+                        Id = Guid.NewGuid(),
+                        SalePrice = 378.29m
+                    }
+                ]
+            }
+        }
+    };
+
+    /// <summary>
+    /// Tests AddNewOffersAsync() for the case in which untracked offers are
+    /// returned from the Woot! API.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(NewOfferData))]
+    public async Task AddNewOffersSuccessful(WootOfferDto wootOffer)
+    {
+        var wootFeedItem = new WootFeedItemDto
+        {
+            // Does not match a tracked offer.
+            OfferId = wootOffer.WootId,
+            Categories = ["PC/Desktops"],
+            IsSoldOut = false
+        };
+
+        // Arrange
+        var client = Substitute.For<IWootClient>();
+        client.GetComputerFeedAsync().Returns([wootFeedItem]);
+        client.GetWootOffersAsync([]).ReturnsForAnyArgs([wootOffer]);
+
+        var service = new WootService(client, _context);
+
+        // Act
+        await service
+            .WithWootComputersFeedAsync()   // Uses mocked GetComputerFeedAsync().
+            .BuildWootOffersFromFeedAsync() // Uses mocked GetWootOffersAsync().
+            .AddNewOffersAsync();           // Uses mocked DbContext.
+
+        // Assert
+        // One more than the amount seeded.
+        Assert.Equal(3, _context.Offers.Count());
+        // Ensure regex to extract specifications worked.
+        Assert.All(_context.Offers,
+            o => Assert.NotEqual(0, o.Configurations.First().MemoryCapacity));
+        Assert.All(_context.Offers,
+            o => Assert.NotEqual(0, o.Configurations.First().StorageSize));
     }
 }
