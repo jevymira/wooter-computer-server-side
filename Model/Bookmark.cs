@@ -9,8 +9,9 @@ public class Bookmark
     [Key]
     public int Id { get; set; }
 
+    // Identity user type is string.
     [ForeignKey(nameof(WooterComputerUser))]
-    public int UserId { get; set; }
+    public required string UserId { get; set; }
 
     [ForeignKey(nameof(HardwareConfiguration))]
     public int ConfigurationId { get; set; }

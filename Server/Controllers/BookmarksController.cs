@@ -18,7 +18,7 @@ namespace Server.Controllers
 
         // GET: api/Bookmarks
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BookmarkDto>>> GetBookmarks(int userId)
+        public async Task<ActionResult<IEnumerable<BookmarkDto>>> GetBookmarks(string userId)
         {
             return await _context.Bookmarks
                 .Where(b => b.UserId == userId)
@@ -40,7 +40,7 @@ namespace Server.Controllers
         // POST: api/Bookmarks
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult> PostBookmark(int userId, int offerItemId)
+        public async Task<ActionResult> PostBookmark(string userId, int offerItemId)
         {
             var bookmark = new Bookmark()
             {
