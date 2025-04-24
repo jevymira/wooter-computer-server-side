@@ -21,6 +21,8 @@ public partial class WootComputersSourceContext : IdentityDbContext<WooterComput
 
     public virtual DbSet<Offer> Offers { get; set; }
 
+    public DbSet<Bookmark> Bookmarks { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (optionsBuilder.IsConfigured)
