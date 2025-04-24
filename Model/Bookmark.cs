@@ -12,10 +12,10 @@ public class Bookmark
     [ForeignKey(nameof(WooterComputerUser))]
     public int UserId { get; set; }
 
-    [ForeignKey(nameof(Offer))]
-    public int OfferId { get; set; }
+    [ForeignKey(nameof(HardwareConfiguration))]
+    public int ConfigurationId { get; set; }
 
-    public Offer Offer { get; set; } = null!;
+    public HardwareConfiguration HardwareConfiguration { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
 }
