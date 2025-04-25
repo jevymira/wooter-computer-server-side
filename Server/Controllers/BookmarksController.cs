@@ -27,6 +27,7 @@ namespace Server.Controllers
                     Id = b.Id,
                     UserId = b.UserId,
                     ConfigurationId = b.ConfigurationId,
+                    Category = b.HardwareConfiguration.Offer.Category,
                     Title = b.HardwareConfiguration.Offer.Title,
                     Photo = b.HardwareConfiguration.Offer.Photo,
                     MemoryCapacity = b.HardwareConfiguration.MemoryCapacity,

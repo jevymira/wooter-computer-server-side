@@ -8,6 +8,8 @@ public class BookmarkDto
 
     public int ConfigurationId { get; set; }
 
+    public string Category { get; set; } = null!;
+
     public string Title { get; set; } = null!;
 
     public string Photo { get; set; } = null!;
