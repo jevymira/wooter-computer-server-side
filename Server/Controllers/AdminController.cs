@@ -16,7 +16,7 @@ public class AdminController(
     [HttpPost("Login")]
     public async Task<IActionResult> LoginAsync(LoginRequestDto loginRequest)
     {
-        WooterComputerUser user = await userManager.FindByNameAsync(loginRequest.Username);
+        WooterComputerUser user = await userManager.FindByNameAsync(loginRequest.UserName);
 
         if (user == null)
         {
