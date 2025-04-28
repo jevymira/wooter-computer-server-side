@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Model;
 
@@ -11,9 +12,11 @@ using Model;
 namespace Model.Migrations
 {
     [DbContext(typeof(WootComputersSourceContext))]
-    partial class WootComputersSourceContextModelSnapshot : ModelSnapshot
+    [Migration("20250424191208_AddBookmark")]
+    partial class AddBookmark
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -163,19 +166,18 @@ namespace Model.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ConfigurationId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("OfferId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ConfigurationId");
+                    b.HasIndex("OfferId");
 
                     b.ToTable("Bookmark");
                 });
@@ -381,13 +383,13 @@ namespace Model.Migrations
 
             modelBuilder.Entity("Model.Bookmark", b =>
                 {
-                    b.HasOne("Model.HardwareConfiguration", "HardwareConfiguration")
+                    b.HasOne("Model.Offer", "Offer")
                         .WithMany()
-                        .HasForeignKey("ConfigurationId")
+                        .HasForeignKey("OfferId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("HardwareConfiguration");
+                    b.Navigation("Offer");
                 });
 
             modelBuilder.Entity("Model.HardwareConfiguration", b =>

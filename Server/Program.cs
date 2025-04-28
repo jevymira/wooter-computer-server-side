@@ -75,6 +75,7 @@ builder.Services.AddHttpClient<WootService>();
 builder.Services.AddScoped<WootService>();
 builder.Services.AddScoped<IWootClient, WootClient>();
 builder.Services.AddHostedService<WootWorkerService>();
+builder.Services.AddScoped<BookmarkService>();
 
 // Logging WootWorkerService.
 builder.Services.AddLogging(builder => builder.AddConsole());
