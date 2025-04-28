@@ -1,9 +1,6 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Model;
-using Server.Controllers;
-using Server.Dtos;
+using Server.Services;
 
 namespace Server.Tests;
 
@@ -82,10 +79,10 @@ public class BookmarksController_Test : IDisposable
     public async Task GetBookmarksUsersExist(string userId, int expected)
     {
         // Arrange
-        var controller = new BookmarksController(_context);
+        var service = new BookmarkService(_context);
 
         // Act
-        IEnumerable<BookmarkDto> result = (await controller.GetBookmarks(userId)).Value;
+        var result = await service.GetBookmarksByUserIdAsync(userId, null);
 
         // Assert
         Assert.Equal(expected, result.Count());
@@ -96,14 +93,13 @@ public class BookmarksController_Test : IDisposable
     public async Task GetBookmarksUserDoesNotExist()
     {
         // Arrange
-        var controller = new BookmarksController(_context);
+        var service = new BookmarkService(_context);
 
         // Act
-        var result = (await controller
-            .GetBookmarks("12345678-abcd-abcd-abcd-123456789qrs")).Value;
+        var result = await service.GetBookmarksByUserIdAsync("12345678-abcd-abcd-abcd-123456789qrs", null);
 
         // Assert
-        Assert.Equal(0, result.Count());
+        Assert.Empty(result);
     }
 
     [Theory]
@@ -112,10 +108,10 @@ public class BookmarksController_Test : IDisposable
     public async Task PostBookmarkValidUser(string userId, int offerItemId)
     {
         // Arrange
-        var controller = new BookmarksController(_context);
+        var service = new BookmarkService(_context);
 
         // Act
-        await controller.PostBookmark(userId, offerItemId);
+        await service.CreateBookmarkAsync(userId, offerItemId);
 
         // Assert
         Assert.Equal(2, _context.Bookmarks.Count());
@@ -125,30 +121,27 @@ public class BookmarksController_Test : IDisposable
     public async Task DeleteBookmarkExists()
     {
         // Arrange
-        var controller = new BookmarksController(_context);
+        var service = new BookmarkService(_context);
 
         // Act
-        var result = (await controller.DeleteBookmark(1));
+        await service.DeleteBookmarkAsync("12345678-1234-1234-1234-123456789abc", 1);
 
         // Assert
-        var notFoundResult = Assert.IsType<NoContentResult>(result);
         Assert.Equal(0, _context.Bookmarks.Count());
-        Assert.Equal(204, notFoundResult.StatusCode);
     }
 
     [Fact]
     public async Task DeleteBookmarkDoesNotExist()
     {
         // Arrange
-        var controller = new BookmarksController(_context);
+        var service = new BookmarkService(_context);
+        const int NON_EXISTENT_BOOKMARK_ID = -1;
 
         // Act
-        var result = (await controller.DeleteBookmark(-1));
+        await service.DeleteBookmarkAsync("12345678-1234-1234-1234-123456789abc", NON_EXISTENT_BOOKMARK_ID);
 
         // Assert
-        var notFoundResult = Assert.IsType<NotFoundResult>(result);
         // No change.
         Assert.Equal(1, _context.Bookmarks.Count());
-        Assert.Equal(404, notFoundResult.StatusCode);
     }
 }

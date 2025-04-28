@@ -28,7 +28,10 @@ public class JwtHandler(
 
     private async Task<List<Claim>> GetClaimsAsync(WooterComputerUser user)
     {
-        List<Claim> claims = [new Claim(ClaimTypes.Name, user.UserName!)];
+        List<Claim> claims = [
+            new Claim(ClaimTypes.Name, user.UserName!),
+            new Claim(ClaimTypes.NameIdentifier, user.Id)
+        ];
         claims.AddRange(from role in await userManager.GetRolesAsync(user) select new Claim(ClaimTypes.Role, role));
         return claims;
     }
