@@ -172,16 +172,28 @@ public class WootService
     /// </remarks>
     public async Task UpdateSoldOutStatusAsync()
     {
-        HashSet<Guid> inStockOfferIdSet = new(_feedItems // HashSet for lookup time
-            .Where(o => !o.IsSoldOut) // Not all sold out offers are returned.
-            .Select(o => o.OfferId));
-        if (!_feedItems.IsNullOrEmpty()) // Guard against faulty/empty responses.
+        if (_feedItems.IsNullOrEmpty()) // Guard against faulty/empty responses.
         {
-            // Compare tracked offers against the IDs of offers still in stock.
-            var endedOffers = _context.Offers
-                .Where(o => !inStockOfferIdSet.Contains(o.WootId));
+            return;
+        }
 
-            foreach (var offer in endedOffers)
+        HashSet<Guid> inStockOfferIdSet = _feedItems // HashSet for lookup time
+            .Where(o => !o.IsSoldOut) // Not all live offers necessarily in-stock.
+            .Select(o => o.OfferId)
+            .ToHashSet();
+
+        // Compare tracked offers against the IDs of offers still in stock.
+        foreach (var offer in _context.Offers)
+        {
+            // In the event that the offer receives more stock
+            // or was mistakenly marked sold-out.
+            if (inStockOfferIdSet.Contains(offer.WootId))
+            {
+                offer.IsSoldOut = false;
+            }
+            // Otherwise: offer is (A.) not in the feed of live offers
+            // or (B.) included, but marked sold-out.
+            else
             {
                 offer.IsSoldOut = true;
             }
