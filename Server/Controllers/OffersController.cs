@@ -1,159 +1,83 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Model;
 using Server.Dtos;
 using Server.Services;
-using System;
 
 namespace Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class OffersController(WootComputersSourceContext context) : ControllerBase
+    public class OffersController(OfferService service) : ControllerBase
     {
-        private readonly WootComputersSourceContext _context = context;
+        private readonly OfferService _service = service;
 
-        // GET: api/Offers
-        [HttpGet]
+        /// <summary>
+        /// Gets all offer hardware configurations (i.e., offer "items");
+        /// optionally, filter by offer category and/or config memory/storage.
+        /// </summary>
+        /// <param name="category">Computer category (e.g., "desktop").</param>
+        /// <param name="memory">System RAM in GB.</param>
+        /// <param name="storage">System storage in GB.</param>
+        /// <returns></returns>
+        [HttpGet] // GET: api/Offers
         public async Task<ActionResult<ICollection<OfferItemDto>>> GetOffers(
             [FromQuery] string? category,
             [FromQuery] List<short> memory,
             [FromQuery] List<short> storage)
         {
-            var categoryFilteredOffers = await _context.Offers
-                .Where(o => !o.IsSoldOut)
-                .Where(o => category.IsNullOrEmpty() || o.Category.Equals(category))
-                .Include(o => o.Configurations)
-                .ToListAsync();
-
-            var memoryStorageFilteredOffers = categoryFilteredOffers
-                .Where(o => o.Configurations
-                    // AND across filter types; OR within filter types.
-                    .Any(c => (memory.IsNullOrEmpty() || memory.Contains(c.MemoryCapacity))
-                        && (storage.IsNullOrEmpty() || storage.Contains(c.StorageSize))
-                        && (c.MemoryCapacity != 0 && c.StorageSize != 0))) // Malformed offers.
-                .ToList();
-
             List <OfferItemDto> items = [];
+            IEnumerable<Model.Offer> offers = await _service
+                .GetOffersAsync(category, memory, storage);
 
-            foreach (var offer in memoryStorageFilteredOffers)
+            foreach (var offer in offers)
             {
                 foreach (var config in offer.Configurations)
                 {
-                    if ((memory.IsNullOrEmpty() || memory.Contains(config.MemoryCapacity))
-                        && (storage.IsNullOrEmpty() || storage.Contains(config.StorageSize)))
+                    items.Add(new OfferItemDto
                     {
-                        items.Add(new OfferItemDto()
-                        {
-                            Id = config.Id,
-                            Category = offer.Category,
-                            Title = offer.Title,
-                            Photo = offer.Photo,
-                            MemoryCapacity = config.MemoryCapacity,
-                            StorageSize = config.StorageSize,
-                            Price = config.Price,
-                            IsSoldOut = offer.IsSoldOut,
-                            Url = offer.Url,
-                        });
-                    }
+                        Id = config.Id,
+                        Category = offer.Category,
+                        Title = offer.Title,
+                        Photo = offer.Photo,
+                        MemoryCapacity = config.MemoryCapacity,
+                        StorageSize = config.StorageSize,
+                        Price = config.Price,
+                        IsSoldOut = offer.IsSoldOut,
+                        Url = offer.Url,
+                    });
                 }
             }
 
             return items;
         }
 
-        // GET: api/Offers/5
-        [HttpGet("{id}")]
+        /// <summary>
+        /// Gets an offer hardware configuration (i.e., offer "item") by its identifier.
+        /// </summary>
+        /// <param name="id">The hardware configuration ID.</param>
+        /// <returns>A hardware configuration (i.e., "item") of an offer.</returns>
+        [HttpGet("{id}")] // GET: api/Offers/5
         public async Task<ActionResult<OfferItemDto>> GetOffer(int id)
         {
-            OfferItemDto? item = await _context.Configurations
-                .Where(config => config.Id.Equals(id))
-                .Select(config => new OfferItemDto
-                {
-                    Id = config.Id,
-                    Category = config.Offer.Category,
-                    Title = config.Offer.Title,
-                    Photo = config.Offer.Photo,
-                    MemoryCapacity = config.MemoryCapacity,
-                    StorageSize = config.StorageSize,
-                    Price = config.Price,
-                    IsSoldOut = config.Offer.IsSoldOut,
-                    Url = config.Offer.Url,
-                })
-                .SingleOrDefaultAsync();
+            var item = await _service.GetOfferConfigurationAsync(id);
 
             if (item == null)
             {
                 return NotFound();
             }
 
-            return item;
-        }
-
-        // PUT: api/Offers/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutOffer(int id, Offer offer)
-        {
-            if (id != offer.Id)
+            return new OfferItemDto
             {
-                return BadRequest();
-            }
-
-            _context.Entry(offer).State = EntityState.Modified;
-
-            /*
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OfferExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            */
-
-            return NoContent();
-        }
-
-        // POST: api/Offers
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Offer>> PostOffer(Offer offer)
-        {
-            _context.Offers.Add(offer);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetOffer", new { id = offer.Id }, offer);
-        }
-
-        // DELETE: api/Offers/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOffer(int id)
-        {
-            var offer = await _context.Offers.FindAsync(id);
-            if (offer == null)
-            {
-                return NotFound();
-            }
-
-            _context.Offers.Remove(offer);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool OfferExists(Guid wootId)
-        {
-            return _context.Offers.Any(e => e.WootId == wootId);
+                Id = item.Id,
+                Category = item.Offer.Category,
+                Title = item.Offer.Title,
+                Photo = item.Offer.Photo,
+                MemoryCapacity = item.MemoryCapacity,
+                StorageSize = item.StorageSize,
+                Price = item.Price,
+                IsSoldOut = item.Offer.IsSoldOut,
+                Url = item.Offer.Url,
+            };
         }
     }
 }

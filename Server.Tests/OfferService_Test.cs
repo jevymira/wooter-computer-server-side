@@ -1,36 +1,33 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Model;
-using Server.Controllers;
-using Server.Dtos;
+﻿using Model;
+using Server.Services;
 
 namespace Server.Tests
 {
-    public class OrdersController_Test : IClassFixture<DatabaseFixture>
+    public class OfferService_Test : IClassFixture<DatabaseFixture>
     {
         private readonly DatabaseFixture _fixture;
 
-        public OrdersController_Test(DatabaseFixture fixture)
+        public OfferService_Test(DatabaseFixture fixture)
         {
             _fixture = fixture;
         }
 
         /// <summary>
-        /// Test the GetOffer() method.
+        /// Test the GetOfferConfigurationAsync() method.
         /// </summary>
         [Fact]
         public async Task GetOfferAsync()
         {
             // Arrange
-            var controller = new OffersController(_fixture.Context);
+            var service = new OfferService(_fixture.Context);
 
             // Act
-            OfferItemDto? offer_existing = (await controller.GetOffer(1)).Value;
-            OfferItemDto? offer_notExisting = (await controller.GetOffer(32767)).Value;
+            HardwareConfiguration item_existing = await service.GetOfferConfigurationAsync(1);
+            HardwareConfiguration item_notExisting = await service.GetOfferConfigurationAsync(32767);
 
             // Assert
-            Assert.NotNull(offer_existing);
-            Assert.Null(offer_notExisting);
+            Assert.NotNull(item_existing);
+            Assert.Null(item_notExisting);
         }
 
         /// <summary>
@@ -42,13 +39,13 @@ namespace Server.Tests
             // Arrange
             int expected = 4;
 
-            var controller = new OffersController(_fixture.Context);
+            var service = new OfferService(_fixture.Context);
 
             // Act
-            var result = (await controller.GetOffers(null, [], [])).Value;
+            var result = await service.GetOffersAsync(null, [], []);
 
             // Assert
-            Assert.Equal(expected, result.Count);
+            Assert.Equal(expected, result.SelectMany(o => o.Configurations).Count());
         }
 
         /// <summary>
@@ -59,13 +56,13 @@ namespace Server.Tests
         public async Task GetOffersByCategoryAsync()
         {
             // Arrange
-            var controller = new OffersController(_fixture.Context);
+            var service = new OfferService(_fixture.Context);
 
             // Act
-            var result = (await controller.GetOffers("Desktops", [], [])).Value;
+            var result = await service.GetOffersAsync("Desktops", [], []);
 
             // Assert
-            Assert.Equal(3, result.Count);
+            Assert.Equal(3, result.SelectMany(o => o.Configurations).Count());
             Assert.All(result, o => Assert.Equal("Desktops", o.Category));
         }
 
@@ -77,14 +74,14 @@ namespace Server.Tests
         public async Task GetOffersByMemoryCapacityAsync()
         {
             // Arrange
-            var controller = new OffersController(_fixture.Context);
+            var service = new OfferService(_fixture.Context);
 
             // Act
-            var result = (await controller.GetOffers(null, [16], [])).Value;
+            var result = await service.GetOffersAsync(null, [16], []);
 
             // Assert
-            Assert.Equal(2, result.Count);
-            Assert.All(result, o => Assert.Equal(16, o.MemoryCapacity));
+            Assert.Equal(2, result.SelectMany(o => o.Configurations).Count());
+            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.MemoryCapacity == 16)));
         }
 
         /// <summary>
@@ -95,14 +92,14 @@ namespace Server.Tests
         public async Task GetOffersByStorageStorageAsync()
         {
             // Arrange
-            var controller = new OffersController(_fixture.Context);
+            var service = new OfferService(_fixture.Context);
 
             // Act
-            var result = (await controller.GetOffers(null, [], [256])).Value;
+            var result = await service.GetOffersAsync(null, [], [256]);
 
             // Assert
-            Assert.Equal(2, result.Count);
-            Assert.All(result, o => Assert.Equal(256, o.StorageSize));
+            Assert.Equal(2, result.SelectMany(o => o.Configurations).Count());
+            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.StorageSize == 256)));
         }
 
         /// <summary>
@@ -113,17 +110,17 @@ namespace Server.Tests
         public async Task GetOffersWith16GbMemoryAndAnyAmongStorageSelection()
         {
             // Arrange
-            var controller = new OffersController(_fixture.Context);
+            var service = new OfferService(_fixture.Context);
             var storage = new List<short>() { 256, 512 };
 
             // Act
-            var result = (await controller.GetOffers(null, [16], storage)).Value;
+            var result = await service.GetOffersAsync(null, [16], storage);
 
             // Assert
-            Assert.Equal(2, result.Count);
+            Assert.Equal(2, result.SelectMany(o => o.Configurations).Count());
             Assert.All(result, o => Assert.Equal("Desktops", o.Category));
-            Assert.All(result, o => Assert.Equal(16, o.MemoryCapacity));
-            Assert.All(result, o => Assert.Contains(o.StorageSize, storage));
+            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.MemoryCapacity == 16)));
+            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.StorageSize == 256 || c.StorageSize == 512)));
         }
 
         /// <summary>
@@ -134,15 +131,15 @@ namespace Server.Tests
         public async Task GetDesktopsWith16GbMemoryAnd256GbStorage()
         {
             // Arrange
-            var controller = new OffersController(_fixture.Context);
+            var service = new OfferService(_fixture.Context);
 
             // Act
-            var result = (await controller.GetOffers("Desktops", [16], [256])).Value;
+            var result = await service.GetOffersAsync("Desktops", [16], [256]);
 
             // Assert
             Assert.All(result, o => Assert.Equal("Desktops", o.Category));
-            Assert.All(result, o => Assert.Equal(16, o.MemoryCapacity));
-            Assert.All(result, o => Assert.Equal(256, o.StorageSize));
+            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.MemoryCapacity == 16)));
+            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.StorageSize == 256)));
         }
     }
 }
