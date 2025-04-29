@@ -80,6 +80,14 @@ builder.Services.AddScoped<BookmarkService>();
 // Logging WootWorkerService.
 builder.Services.AddLogging(builder => builder.AddConsole());
 
+// Prevent unhandled exceptions in the BackgroundService from stopping the Host, from
+// https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/6.0/hosting-exception-handling
+builder.Services.Configure<HostOptions>((hostOptions) =>
+{
+    // By default: BackgroundServiceExceptionBehavior.StopHost
+    hostOptions.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
