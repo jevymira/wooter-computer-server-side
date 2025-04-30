@@ -104,8 +104,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Secret Manager tool (development), see:
-// https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-8.0&tabs=windows
-app.MapGet("/", () => builder.Configuration["Woot:DeveloperApiKey"]);
-
 app.Run();
