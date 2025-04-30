@@ -18,9 +18,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+	<!-- 
+	Fixes error: "Found multiple publish output files with the same relative path:
+	https://stackoverflow.com/a/70623599.
+	Instead of: <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	-->
+	<Content Include="appsettings.json">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	  <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+	</Content>
   </ItemGroup>
 
 </Project>
