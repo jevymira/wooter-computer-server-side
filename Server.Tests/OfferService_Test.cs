@@ -1,5 +1,5 @@
-﻿using Model;
-using Server.Services;
+﻿using Server.Services;
+using Server.Dtos;
 
 namespace Server.Tests
 {
@@ -22,8 +22,8 @@ namespace Server.Tests
             var service = new OfferService(_fixture.Context);
 
             // Act
-            HardwareConfiguration item_existing = await service.GetOfferConfigurationAsync(1);
-            HardwareConfiguration item_notExisting = await service.GetOfferConfigurationAsync(32767);
+            OfferItemDto item_existing = await service.GetOfferConfigurationAsync(1);
+            OfferItemDto item_notExisting = await service.GetOfferConfigurationAsync(32767);
 
             // Assert
             Assert.NotNull(item_existing);
@@ -42,10 +42,10 @@ namespace Server.Tests
             var service = new OfferService(_fixture.Context);
 
             // Act
-            var result = await service.GetOffersAsync(null, [], []);
+            var result = await service.GetOffersAsync(new GetOffersRequestDto() {});
 
             // Assert
-            Assert.Equal(expected, result.SelectMany(o => o.Configurations).Count());
+            Assert.Equal(expected, result.Count());
         }
 
         /// <summary>
@@ -59,10 +59,13 @@ namespace Server.Tests
             var service = new OfferService(_fixture.Context);
 
             // Act
-            var result = await service.GetOffersAsync("Desktops", [], []);
+            var result = await service.GetOffersAsync(new GetOffersRequestDto()
+            { 
+                Category = "Desktops"
+            });
 
             // Assert
-            Assert.Equal(3, result.SelectMany(o => o.Configurations).Count());
+            Assert.Equal(3, result.Count());
             Assert.All(result, o => Assert.Equal("Desktops", o.Category));
         }
 
@@ -77,11 +80,14 @@ namespace Server.Tests
             var service = new OfferService(_fixture.Context);
 
             // Act
-            var result = await service.GetOffersAsync(null, [16], []);
+            var result = await service.GetOffersAsync(new GetOffersRequestDto()
+            {
+                Memory = [16]
+            });
 
             // Assert
-            Assert.Equal(2, result.SelectMany(o => o.Configurations).Count());
-            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.MemoryCapacity == 16)));
+            Assert.Equal(2, result.Count());
+            Assert.All(result, o => Assert.True(o.MemoryCapacity == 16));
         }
 
         /// <summary>
@@ -95,11 +101,14 @@ namespace Server.Tests
             var service = new OfferService(_fixture.Context);
 
             // Act
-            var result = await service.GetOffersAsync(null, [], [256]);
+            var result = await service.GetOffersAsync(new GetOffersRequestDto()
+            {
+                Storage = [256]
+            });
 
             // Assert
-            Assert.Equal(2, result.SelectMany(o => o.Configurations).Count());
-            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.StorageSize == 256)));
+            Assert.Equal(2, result.Count());
+            Assert.All(result, o => Assert.True(o.StorageSize == 256));
         }
 
         /// <summary>
@@ -114,13 +123,17 @@ namespace Server.Tests
             var storage = new List<short>() { 256, 512 };
 
             // Act
-            var result = await service.GetOffersAsync(null, [16], storage);
+            var result = await service.GetOffersAsync(new GetOffersRequestDto()
+            {
+                Memory = [16],
+                Storage = storage
+            });
 
             // Assert
-            Assert.Equal(2, result.SelectMany(o => o.Configurations).Count());
+            Assert.Equal(2, result.Count());
             Assert.All(result, o => Assert.Equal("Desktops", o.Category));
-            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.MemoryCapacity == 16)));
-            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.StorageSize == 256 || c.StorageSize == 512)));
+            Assert.All(result, o => Assert.True(o.MemoryCapacity == 16));
+            Assert.All(result, o => Assert.True(o.StorageSize == 256 || o.StorageSize == 512));
         }
 
         /// <summary>
@@ -134,12 +147,17 @@ namespace Server.Tests
             var service = new OfferService(_fixture.Context);
 
             // Act
-            var result = await service.GetOffersAsync("Desktops", [16], [256]);
+            var result = await service.GetOffersAsync(new GetOffersRequestDto()
+            {
+                Category = "Desktops",
+                Memory = [16],
+                Storage = [256]
+            });
 
             // Assert
             Assert.All(result, o => Assert.Equal("Desktops", o.Category));
-            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.MemoryCapacity == 16)));
-            Assert.All(result, o => Assert.True(o.Configurations.All(c => c.StorageSize == 256)));
+            Assert.All(result, o => Assert.True(o.MemoryCapacity == 16));
+            Assert.All(result, o => Assert.True(o.StorageSize == 256));
         }
     }
 }
