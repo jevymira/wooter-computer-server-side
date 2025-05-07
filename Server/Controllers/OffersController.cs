@@ -21,34 +21,9 @@ namespace Server.Controllers
         /// <returns></returns>
         [HttpGet] // GET: api/Offers
         public async Task<ActionResult<ICollection<OfferItemDto>>> GetOffers(
-            [FromQuery] string? category,
-            [FromQuery] List<short> memory,
-            [FromQuery] List<short> storage)
+            [FromQuery] GetOffersRequestDto request)
         {
-            List <OfferItemDto> items = [];
-            IEnumerable<Model.Offer> offers = await _service
-                .GetOffersAsync(category, memory, storage);
-
-            foreach (var offer in offers)
-            {
-                foreach (var config in offer.Configurations)
-                {
-                    items.Add(new OfferItemDto
-                    {
-                        Id = config.Id,
-                        Category = offer.Category,
-                        Title = offer.Title,
-                        Photo = offer.Photo,
-                        MemoryCapacity = config.MemoryCapacity,
-                        StorageSize = config.StorageSize,
-                        Price = config.Price,
-                        IsSoldOut = offer.IsSoldOut,
-                        Url = offer.Url,
-                    });
-                }
-            }
-
-            return items;
+            return Ok(await _service.GetOffersAsync(request));
         }
 
         /// <summary>
@@ -65,19 +40,10 @@ namespace Server.Controllers
             {
                 return NotFound();
             }
-
-            return new OfferItemDto
+            else
             {
-                Id = item.Id,
-                Category = item.Offer.Category,
-                Title = item.Offer.Title,
-                Photo = item.Offer.Photo,
-                MemoryCapacity = item.MemoryCapacity,
-                StorageSize = item.StorageSize,
-                Price = item.Price,
-                IsSoldOut = item.Offer.IsSoldOut,
-                Url = item.Offer.Url,
-            };
+                return Ok(item);
+            }
         }
     }
 }
