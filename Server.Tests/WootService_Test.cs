@@ -373,10 +373,10 @@ public class WootService_Test : IDisposable
         // Assert
         // One more than the amount seeded.
         Assert.Equal(3, _context.Offers.Count());
-        // Ensure regex to extract specifications worked.
-        Assert.All(_context.Offers,
-            o => Assert.NotEqual(0, o.Configurations.First().MemoryCapacity));
-        Assert.All(_context.Offers,
-            o => Assert.NotEqual(0, o.Configurations.First().StorageSize));
+        // Ensure regex extracted specifications, thus none with the default value 0.
+        Assert.All(_context.Offers, o => Assert.All(o.Configurations,
+            c => Assert.NotEqual(0, c.MemoryCapacity)));
+        Assert.All(_context.Offers, o => Assert.All(o.Configurations,
+            c => Assert.NotEqual(0, c.StorageSize)));
     }
 }
