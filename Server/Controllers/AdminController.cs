@@ -11,7 +11,7 @@ namespace Server.Controllers;
 [ApiController]
 public class AdminController(
          UserManager<WooterComputerUser> userManager,
-         JwtHandler jwtHandler) : ControllerBase
+         IJwtHandler jwtHandler) : ControllerBase
 {
     [HttpPost("Login")]
     public async Task<IActionResult> LoginAsync(LoginRequestDto loginRequest)

@@ -9,7 +9,7 @@ namespace Server;
 
 public class JwtHandler(
     IConfiguration configuration,
-    UserManager<WooterComputerUser> userManager)
+    UserManager<WooterComputerUser> userManager) : IJwtHandler
 {
     public async Task<JwtSecurityToken> GetTokenAsync(WooterComputerUser user) =>
         new(
