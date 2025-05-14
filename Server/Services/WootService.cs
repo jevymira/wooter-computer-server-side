@@ -199,7 +199,12 @@ public class WootService
             }
         }
 
-        await _context.SaveChangesAsync();
+        // Final guard against marking all offers sold-out.
+        // (Assumes that such a case is erroneous.)
+        if (!_context.Offers.Where(o => o.IsSoldOut == false).IsNullOrEmpty())
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 
     private List<HardwareConfiguration> GetHardwareConfigurations(WootOfferDto offer)
