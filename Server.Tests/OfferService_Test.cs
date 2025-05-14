@@ -73,8 +73,9 @@ namespace Server.Tests
         /// Tests the GetOffers() method, set to filter for a single select memory capacity.
         /// Applies no filters for "category" or "storage."
         /// </summary>
-        [Fact]
-        public async Task GetOffersByMemoryCapacityAsync()
+        [Theory]
+        [InlineData(16)]
+        public async Task GetOffersByMemoryCapacityAsync(short memory)
         {
             // Arrange
             var service = new OfferService(_fixture.Context);
@@ -82,7 +83,7 @@ namespace Server.Tests
             // Act
             var result = await service.GetOffersAsync(new GetOffersRequestDto()
             {
-                Memory = [16]
+                Memory = [memory]
             });
 
             // Assert
@@ -94,8 +95,9 @@ namespace Server.Tests
         /// Tests the GetOffers() method, set to filter for a single select storage size.
         /// Applies no filters for "category" or "memory."
         /// </summary>
-        [Fact]
-        public async Task GetOffersByStorageStorageAsync()
+        [Theory]
+        [InlineData(256)]
+        public async Task GetOffersByStorageStorageAsync(short storage)
         {
             // Arrange
             var service = new OfferService(_fixture.Context);
@@ -103,7 +105,7 @@ namespace Server.Tests
             // Act
             var result = await service.GetOffersAsync(new GetOffersRequestDto()
             {
-                Storage = [256]
+                Storage = [storage]
             });
 
             // Assert
@@ -115,18 +117,18 @@ namespace Server.Tests
         /// Tests method GetOffers() with a single filter value applied for "memory"
         /// and several filter values for "storage".
         /// </summary>
-        [Fact]
-        public async Task GetOffersWith16GbMemoryAndAnyAmongStorageSelection()
+        [Theory]
+        [InlineData(16, new short[] { 256, 512 })]
+        public async Task GetOffersWith16GbMemoryAndAnyAmongStorageSelection(short memory, short[] storage)
         {
             // Arrange
             var service = new OfferService(_fixture.Context);
-            var storage = new List<short>() { 256, 512 };
 
             // Act
             var result = await service.GetOffersAsync(new GetOffersRequestDto()
             {
-                Memory = [16],
-                Storage = storage
+                Memory = [memory],
+                Storage = [.. storage]
             });
 
             // Assert
@@ -140,8 +142,9 @@ namespace Server.Tests
         /// Tests method GetOffers() with all filters active.
         /// Filters "memory" and "storage" with single values.
         /// </summary>
-        [Fact]
-        public async Task GetDesktopsWith16GbMemoryAnd256GbStorage()
+        [Theory]
+        [InlineData(16, 256)]
+        public async Task GetDesktopsWith16GbMemoryAnd256GbStorage(short memory, short storage)
         {
             // Arrange
             var service = new OfferService(_fixture.Context);
@@ -150,14 +153,14 @@ namespace Server.Tests
             var result = await service.GetOffersAsync(new GetOffersRequestDto()
             {
                 Category = "Desktops",
-                Memory = [16],
-                Storage = [256]
+                Memory = [memory],
+                Storage = [storage]
             });
 
             // Assert
             Assert.All(result, o => Assert.Equal("Desktops", o.Category));
-            Assert.All(result, o => Assert.True(o.MemoryCapacity == 16));
-            Assert.All(result, o => Assert.True(o.StorageSize == 256));
+            Assert.All(result, o => Assert.True(o.MemoryCapacity == memory));
+            Assert.All(result, o => Assert.True(o.StorageSize == storage));
         }
     }
 }
