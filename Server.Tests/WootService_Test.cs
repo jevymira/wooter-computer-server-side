@@ -3,8 +3,8 @@ using Model;
 using NSubstitute;
 using Server.Dtos;
 using Server.Services;
+using Server.Services.Extensions;
 using Server.Services.Interfaces;
-using System;
 
 namespace Server.Tests;
 

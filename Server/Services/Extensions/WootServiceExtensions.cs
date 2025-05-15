@@ -1,6 +1,4 @@
-﻿using Server.Services;
-
-namespace Server;
+﻿namespace Server.Services.Extensions;
 
 /// <remarks>
 /// For reference, see the forum posts:
