@@ -8,7 +8,7 @@ using Server.Services.Interfaces;
 
 namespace Server.Tests;
 
-public class WootService_Test : IDisposable
+public class WootServiceTests : IDisposable
 {
     private readonly WootComputersSourceContext _context;
     private readonly Guid _wootOfferId;
@@ -19,7 +19,7 @@ public class WootService_Test : IDisposable
     /// <remarks>
     /// Adapted from https://xunit.net/docs/shared-context#constructor.
     /// </remarks>
-    public WootService_Test()
+    public WootServiceTests()
     {
         var options = new DbContextOptionsBuilder<WootComputersSourceContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -373,7 +373,7 @@ public class WootService_Test : IDisposable
         // Assert
         // One more than the amount seeded.
         Assert.Equal(3, _context.Offers.Count());
-        // Ensure regex extracted specifications, thus none with the default value 0.
+        // Ensure regex extracts specifications; thus none with the default value 0.
         Assert.All(_context.Offers, o => Assert.All(o.Configurations,
             c => Assert.NotEqual(0, c.MemoryCapacity)));
         Assert.All(_context.Offers, o => Assert.All(o.Configurations,

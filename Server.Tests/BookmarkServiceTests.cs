@@ -4,7 +4,7 @@ using Server.Services;
 
 namespace Server.Tests;
 
-public class BookmarkService_Test : IDisposable
+public class BookmarkServiceTests : IDisposable
 {
     private readonly WootComputersSourceContext _context;
 
@@ -14,7 +14,7 @@ public class BookmarkService_Test : IDisposable
     /// <remarks>
     /// Adapted from https://xunit.net/docs/shared-context#constructor.
     /// </remarks>
-    public BookmarkService_Test()
+    public BookmarkServiceTests()
     {
         var options = new DbContextOptionsBuilder<WootComputersSourceContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())

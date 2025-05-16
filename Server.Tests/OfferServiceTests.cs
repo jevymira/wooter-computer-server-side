@@ -3,11 +3,11 @@ using Server.Dtos;
 
 namespace Server.Tests
 {
-    public class OfferService_Test : IClassFixture<DatabaseFixture>
+    public class OfferServiceTests : IClassFixture<DatabaseFixture>
     {
         private readonly DatabaseFixture _fixture;
 
-        public OfferService_Test(DatabaseFixture fixture)
+        public OfferServiceTests(DatabaseFixture fixture)
         {
             _fixture = fixture;
         }
