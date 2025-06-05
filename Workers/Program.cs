@@ -5,7 +5,6 @@ using Server.Services.Interfaces;
 using Server.Services;
 using Model;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
@@ -15,7 +14,7 @@ var host = new HostBuilder()
         services.ConfigureFunctionsApplicationInsights();
 
         services.AddDbContext<WootComputersSourceContext>(options =>
-            options.UseSqlServer(context.Configuration.GetConnectionString("DefaultConnection")));
+            options.UseSqlServer(context.Configuration["AZURE_SQL_CONNECTIONSTRING"]));
 
         services.AddScoped<WootService>();
         services.AddScoped<IWootClient, WootClient>();
