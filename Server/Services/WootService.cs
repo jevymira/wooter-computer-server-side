@@ -36,7 +36,7 @@ public class WootService
 
         // Filter for Desktops and Laptops (and thus exclude e.g., Peripherals, Tablets).
         IEnumerable<WootFeedItemDto> items =
-            (feed.Count == 0)
+            feed.IsNullOrEmpty()
             ? new List<WootFeedItemDto>()
             : feed.Where(i =>
                 i.Categories.Contains("PC/Desktops") ||
