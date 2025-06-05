@@ -18,7 +18,7 @@ namespace Workers
         }
 
         [Function(nameof(SyncWithWoot))]
-        public async Task Run([TimerTrigger("* * */3 * * *")] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("0 0 */1 * * *")] TimerInfo myTimer)
         {
             _logger.LogInformation("C# Timer trigger function executed at: {time}", DateTime.Now);
             
