@@ -6,7 +6,6 @@ using Microsoft.OpenApi.Models;
 using Model;
 using Server;
 using Server.Services;
-using Server.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,25 +68,8 @@ builder.Services.AddAuthentication(options =>
             ?? throw new InvalidOperationException()
     };
 });
-// Rather than instantiating (multiple) HttpClients directly, see:
-// https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
-builder.Services.AddHttpClient<WootService>();
-builder.Services.AddScoped<WootService>();
-builder.Services.AddScoped<IWootClient, WootClient>();
-builder.Services.AddHostedService<WootWorkerService>();
 builder.Services.AddScoped<OfferService>();
 builder.Services.AddScoped<BookmarkService>();
-
-// Logging WootWorkerService.
-builder.Services.AddLogging(builder => builder.AddConsole());
-
-// Prevent unhandled exceptions in the BackgroundService from stopping the Host, from
-// https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/6.0/hosting-exception-handling
-builder.Services.Configure<HostOptions>((hostOptions) =>
-{
-    // By default: BackgroundServiceExceptionBehavior.StopHost
-    hostOptions.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore;
-});
 
 var app = builder.Build();
 
