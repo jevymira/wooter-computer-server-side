@@ -2,7 +2,7 @@
   "profiles": {
     "Workers": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7030\r\n"
+      "commandLineArgs": "--port 7030"
     }
   }
 }
